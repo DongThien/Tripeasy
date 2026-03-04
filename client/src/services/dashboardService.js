@@ -1,3 +1,7 @@
+export const getRevenueChartData = async () => {
+    const res = await axiosClient.get("/dashboard/revenue-chart");
+    return res.data.data;
+};
 import axiosClient from "./axiosClient";
 
 export const getOverviewStats = async () => {
@@ -19,6 +23,7 @@ const dashboardService = {
     getOverviewStats,
     getTopTours,
     getRecentBookings,
+    getRevenueChartData,
 };
 
 export default dashboardService;

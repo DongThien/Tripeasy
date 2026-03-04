@@ -5,19 +5,28 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 const AdminLayout = React.lazy(() => import('./layouts/AdminLayout'));
 const ClientLayout = React.lazy(() => import('./layouts/ClientLayout'));
 
-// Pages (có thể tạo file rỗng cho các page này)
+// Admin Pages
 const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
+const TourList = React.lazy(() => import('./pages/admin/TourList'));
+
+// Client Pages
 const ClientHome = React.lazy(() => import('./pages/client/Home'));
 
 const App = () => (
     <React.Suspense fallback={<div>Loading...</div>}>
         <Routes>
             <Route path="/" element={<Navigate to="/client" replace />} />
-            <Route path="/admin/*" element={<AdminLayout />}>
-                <Route index element={<AdminDashboard />} />
-                {/* Thêm các route admin khác tại đây */}
+            <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="tours" element={<TourList />} />
+                <Route path="tours/add" element={<div>Add Tour Page - Coming Soon</div>} />
+                <Route path="bookings" element={<div>Bookings Page - Coming Soon</div>} />
+                <Route path="customers" element={<div>Customers Page - Coming Soon</div>} />
+                <Route path="settings" element={<div>Settings Page - Coming Soon</div>} />
+                <Route path="contact" element={<div>Contact Page - Coming Soon</div>} />
             </Route>
-            <Route path="/client/*" element={<ClientLayout />}>
+            <Route path="/client" element={<ClientLayout />}>
                 <Route index element={<ClientHome />} />
                 {/* Thêm các route client khác tại đây */}
             </Route>

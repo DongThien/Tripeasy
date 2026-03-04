@@ -1,9 +1,9 @@
 import { pgPool } from "../config/db.js";
 
-// GET /api/tours?destination=...&title=...&limit=10&offset=0
+// GET /api/tours - Lấy tất cả tours (không limit mặc định)
 export const getAllTours = async (req, res) => {
     try {
-        const { destination, title, limit = 10, offset = 0 } = req.query;
+        const { destination, title, limit, offset } = req.query;
         let baseQuery = "SELECT * FROM tours WHERE 1=1";
         const params = [];
         let idx = 1;
@@ -16,12 +16,34 @@ export const getAllTours = async (req, res) => {
             baseQuery += ` AND title ILIKE $${idx++}`;
             params.push(`%${title}%`);
         }
-        baseQuery += ` ORDER BY created_at DESC LIMIT $${idx++} OFFSET $${idx++}`;
-        params.push(Number(limit), Number(offset));
 
-        const { rows } = await pgPool.query(baseQuery, params);
-        res.json({ success: true, data: rows, message: "Fetched tours successfully" });
+        baseQuery += ` ORDER BY created_at DESC`;
+
+        // Chỉ thêm LIMIT/OFFSET nếu được yêu cầu
+        if (limit) {
+            baseQuery += ` LIMIT $${idx++}`;
+            params.push(Number(limit));
+            if (offset) {
+                baseQuery += ` OFFSET $${idx++}`;
+                params.push(Number(offset));
+            }
+        }
+
+        const result = await pgPool.query(baseQuery, params);
+
+        // Debug log cho terminal server
+        console.log("Tour API hit, found:", result.rowCount);
+        console.log("Query executed:", baseQuery);
+        console.log("Params:", params);
+
+        res.status(200).json({
+            success: true,
+            data: result.rows,
+            message: "Lấy dữ liệu thành công"
+        });
+
     } catch (err) {
+        console.error("Error in getAllTours:", err);
         res.status(500).json({ success: false, data: null, message: err.message });
     }
 };

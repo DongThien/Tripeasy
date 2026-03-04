@@ -1,3 +1,30 @@
+// Revenue Chart - Tổng doanh thu 6 tháng gần nhất
+export const getRevenueChart = async (req, res) => {
+    try {
+        // Lấy tổng doanh thu theo từng tháng trong 6 tháng gần nhất
+        const query = `
+            SELECT 
+                TO_CHAR(DATE_TRUNC('month', booking_date), 'MM/YYYY') AS month,
+                EXTRACT(MONTH FROM booking_date) AS month_num,
+                EXTRACT(YEAR FROM booking_date) AS year_num,
+                SUM(total_price) AS total
+            FROM bookings
+            WHERE payment_status = 'COMPLETED'
+                AND booking_date >= (DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months')
+            GROUP BY month, month_num, year_num
+            ORDER BY year_num ASC, month_num ASC
+        `;
+        const { rows } = await pgPool.query(query);
+        // Map ra format [{ name: 'Tháng 1', total: ... }, ...]
+        const data = rows.map(r => ({
+            name: `Tháng ${parseInt(r.month_num)}`,
+            total: Number(r.total)
+        }));
+        res.json({ success: true, data, message: "Fetched revenue chart data" });
+    } catch (err) {
+        res.status(500).json({ success: false, data: null, message: err.message });
+    }
+};
 import { pgPool } from "../config/db.js";
 
 export const getDashboardStats = async (req, res) => {
