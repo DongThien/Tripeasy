@@ -48,37 +48,159 @@ export const getAllTours = async (req, res) => {
     }
 };
 
-// GET /api/tours/:id
-export const getTourById = async (req, res) => {
+// POST /api/tours - Tạo tour mới (bao gồm upload ảnh)
+export const createTour = async (req, res) => {
+    const client = await pgPool.connect();
+
     try {
-        const { id } = req.params;
-        const tourQuery = "SELECT * FROM tours WHERE tour_id = $1";
-        const imageQuery = "SELECT image_url FROM images WHERE tour_id = $1";
-        const tourResult = await pgPool.query(tourQuery, [id]);
-        if (tourResult.rows.length === 0)
-            return res.status(404).json({ success: false, data: null, message: "Tour not found" });
+        // Begin transaction
+        await client.query('BEGIN');
 
-        const imagesResult = await pgPool.query(imageQuery, [id]);
-        const tour = tourResult.rows[0];
-        tour.images = imagesResult.rows.map(img => img.image_url);
+        const {
+            title,
+            destination,
+            duration,
+            max_guests, // Frontend gửi max_guests
+            price_adult,
+            price_child,
+            description,
+            itinerary
+        } = req.body;
 
-        res.json({ success: true, data: tour, message: "Fetched tour detail" });
+        // Validation cơ bản
+        if (!title || !destination || !price_adult) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({
+                success: false,
+                data: null,
+                message: "Tên tour, điểm đến và giá người lớn là bắt buộc"
+            });
+        }
+
+        // Parse itinerary từ JSON string
+        let parsedItinerary;
+        try {
+            parsedItinerary = JSON.parse(itinerary);
+        } catch (error) {
+            parsedItinerary = itinerary; // Nếu đã là object thì giữ nguyên
+        }
+
+        // Parse and clean price fields for absolute safety
+        const cleanPriceAdult = (price_adult || '').toString().replace(/\D/g, '');
+        const cleanPriceChild = (price_child || '').toString().replace(/\D/g, '');
+        const cleanMaxGuests = (max_guests || '').toString().replace(/\D/g, '');
+        
+        const adultPrice = parseInt(cleanPriceAdult, 10) || 0;
+        const childPrice = parseInt(cleanPriceChild, 10) || 0;
+        const guestQuantity = parseInt(cleanMaxGuests, 10) || 1;
+
+        // Step 1: Insert vào bảng tours
+        const insertTourQuery = `
+            INSERT INTO tours (
+                title, destination, duration, quantity, 
+                price_adult, price_child, 
+                description, itinerary, availability, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+            RETURNING tour_id
+        `;
+
+        const tourValues = [
+            title,
+            destination,
+            duration,
+            guestQuantity, // Use cleaned max_guests
+            adultPrice, // Use cleaned price_adult
+            childPrice, // Use cleaned price_child
+            description,
+            JSON.stringify(parsedItinerary), // Lưu dạng JSONB
+            true // availability default true
+        ];
+
+        const tourResult = await client.query(insertTourQuery, tourValues);
+        const tourId = tourResult.rows[0].tour_id;
+
+        // Step 2: Insert ảnh vào bảng images (nếu có)
+        if (req.files && req.files.length > 0) {
+            const imageInsertPromises = req.files.map(file => {
+                const insertImageQuery = `
+                    INSERT INTO images (tour_id, image_url, upload_date) 
+                    VALUES ($1, $2, NOW())
+                `;
+                return client.query(insertImageQuery, [tourId, file.path]);
+            });
+
+            await Promise.all(imageInsertPromises);
+        }
+
+        // Commit transaction
+        await client.query('COMMIT');
+
+        console.log(`Tour created successfully with ID: ${tourId}, Images: ${req.files?.length || 0}`);
+
+        res.status(201).json({
+            success: true,
+            data: {
+                tour_id: tourId,
+                images_count: req.files?.length || 0
+            },
+            message: "Tour được tạo thành công"
+        });
+
     } catch (err) {
-        res.status(500).json({ success: false, data: null, message: err.message });
+        // Rollback transaction on error
+        await client.query('ROLLBACK');
+        console.error("Error in createTour:", err);
+
+        res.status(500).json({
+            success: false,
+            data: null,
+            message: "Lỗi server khi tạo tour: " + err.message
+        });
+    } finally {
+        client.release();
     }
 };
 
-// POST /api/tours
-export const createTour = async (req, res) => {
+// GET /api/tours/:id - Lấy chi tiết tour theo ID
+export const getTourById = async (req, res) => {
     try {
-        const { title, description, quantity, price_adult, price_child, duration, destination, availability, itinerary } = req.body;
-        const insertQuery = `
-            INSERT INTO tours (title, description, quantity, price_adult, price_child, duration, destination, availability, itinerary)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`;
-        const { rows } = await pgPool.query(insertQuery, [title, description, quantity, price_adult, price_child, duration, destination, availability, itinerary]);
-        res.status(201).json({ success: true, data: rows[0], message: "Tour created successfully" });
+        const { id } = req.params;
+
+        // Query tour với images
+        const tourQuery = `
+            SELECT t.*, 
+                   ARRAY_AGG(i.image_url) FILTER (WHERE i.image_url IS NOT NULL) as images
+            FROM tours t
+            LEFT JOIN images i ON t.tour_id = i.tour_id
+            WHERE t.tour_id = $1
+            GROUP BY t.tour_id
+        `;
+
+        const result = await pgPool.query(tourQuery, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                data: null,
+                message: "Tour không tồn tại"
+            });
+        }
+
+        console.log(`Tour ${id} retrieved successfully`);
+
+        res.status(200).json({
+            success: true,
+            data: result.rows[0],
+            message: "Lấy chi tiết tour thành công"
+        });
+
     } catch (err) {
-        res.status(500).json({ success: false, data: null, message: err.message });
+        console.error("Error in getTourById:", err);
+        res.status(500).json({
+            success: false,
+            data: null,
+            message: "Lỗi server: " + err.message
+        });
     }
 };
 

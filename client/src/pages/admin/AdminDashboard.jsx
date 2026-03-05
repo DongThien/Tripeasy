@@ -1,11 +1,11 @@
 // src/pages/admin/AdminDashboard.jsx
 import React, { useEffect, useState } from "react";
 import dashboardService from "../../services/dashboardService";
-import MetricCards from "../../components/admin/MetricCards";
-import RevenueAnalytics from "../../components/admin/RevenueAnalytics";
-import TopSellingTours from "../../components/admin/TopSellingTours";
-import RecentBookingsTable from "../../components/admin/RecentBookingsTable";
-import RevenueChart from "../../components/admin/RevenueChart";
+import MetricCards from "../../components/admin/dashboard/MetricCards";
+import RevenueAnalytics from "../../components/admin/dashboard/RevenueAnalytics";
+import TopSellingTours from "../../components/admin/dashboard/TopSellingTours";
+import RecentBookingsTable from "../../components/admin/dashboard/RecentBookingsTable";
+import RevenueChart from "../../components/admin/dashboard/RevenueChart";
 import { formatVND } from "../../utils/formatHelper";
 
 const AdminDashboard = () => {

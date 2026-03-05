@@ -8,7 +8,7 @@ import {
     CartesianGrid,
     Tooltip
 } from "recharts";
-import { formatVND as formatVNDHelper } from "../../utils/formatHelper";
+import { formatVND as formatVNDHelper } from "../../../utils/formatHelper";
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {

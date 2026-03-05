@@ -8,6 +8,7 @@ const ClientLayout = React.lazy(() => import('./layouts/ClientLayout'));
 // Admin Pages
 const AdminDashboard = React.lazy(() => import('./pages/admin/AdminDashboard'));
 const TourList = React.lazy(() => import('./pages/admin/TourList'));
+const AddTour = React.lazy(() => import('./pages/admin/AddTour'));
 
 // Client Pages
 const ClientHome = React.lazy(() => import('./pages/client/Home'));
@@ -20,7 +21,7 @@ const App = () => (
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="tours" element={<TourList />} />
-                <Route path="tours/add" element={<div>Add Tour Page - Coming Soon</div>} />
+                <Route path="tours/add" element={<AddTour />} />
                 <Route path="bookings" element={<div>Bookings Page - Coming Soon</div>} />
                 <Route path="customers" element={<div>Customers Page - Coming Soon</div>} />
                 <Route path="settings" element={<div>Settings Page - Coming Soon</div>} />
