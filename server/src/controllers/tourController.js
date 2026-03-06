@@ -4,7 +4,11 @@ import { pgPool } from "../config/db.js";
 export const getAllTours = async (req, res) => {
     try {
         const { destination, region, title, limit, offset } = req.query;
-        let baseQuery = "SELECT * FROM tours WHERE 1=1";
+        let baseQuery = `
+            SELECT t.*,
+                   (SELECT i.image_url FROM images i WHERE i.tour_id = t.tour_id ORDER BY i.upload_date ASC LIMIT 1) AS image_url
+            FROM tours t
+            WHERE 1=1`;
         const params = [];
         let idx = 1;
 
@@ -217,11 +221,33 @@ export const getTourById = async (req, res) => {
 export const updateTour = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, quantity, price_adult, price_child, duration, destination, availability, itinerary } = req.body;
+        const {
+            title, description, quantity, price_adult, price_child,
+            duration, destination, region,
+            availability, itinerary
+        } = req.body;
+
         const updateQuery = `
-            UPDATE tours SET title=$1, description=$2, quantity=$3, price_adult=$4, price_child=$5, duration=$6, destination=$7, availability=$8, itinerary=$9
-            WHERE tour_id=$10 RETURNING *`;
-        const { rows } = await pgPool.query(updateQuery, [title, description, quantity, price_adult, price_child, duration, destination, availability, itinerary, id]);
+            UPDATE tours
+            SET title=$1, description=$2, quantity=$3,
+                price_adult=$4, price_child=$5, duration=$6,
+                destination=$7, region=$8,
+                availability=$9, itinerary=$10
+            WHERE tour_id=$11
+            RETURNING *`;
+
+        const values = [
+            title, description,
+            Math.abs(parseInt(quantity, 10) || 0),
+            Math.abs(Math.round(parseFloat(price_adult) || 0)),
+            Math.abs(Math.round(parseFloat(price_child) || 0)),
+            duration,
+            destination, region || null,
+            availability, itinerary,
+            id
+        ];
+
+        const { rows } = await pgPool.query(updateQuery, values);
         if (rows.length === 0)
             return res.status(404).json({ success: false, data: null, message: "Tour not found" });
         res.json({ success: true, data: rows[0], message: "Tour updated successfully" });

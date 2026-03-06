@@ -1,5 +1,5 @@
 import React from 'react';
-import SearchBoard from "./SearchBoard";
+import SearchBoard from './SearchBoard';
 
 const HeroSection = () => (
     <section className="relative h-[500px] w-full">

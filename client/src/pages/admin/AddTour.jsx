@@ -192,11 +192,6 @@ const AddTour = () => {
     return (
         <div className="w-full">
             <div className="max-w-5xl mx-auto space-y-6">
-                <div className="mb-8">
-                    <h2 className="text-3xl font-bold text-gray-900">Thêm Tour Mới</h2>
-                    <p className="text-gray-500 mt-2">Tạo và xuất bản các tour du lịch mới cho khách hàng của bạn.</p>
-                </div>
-
                 <TourBasicInfoSection
                     formData={formData}
                     handleInputChange={handleInputChange}

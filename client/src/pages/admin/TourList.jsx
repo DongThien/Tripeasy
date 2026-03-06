@@ -138,6 +138,12 @@ const TourList = () => {
                 isLoading={isLoading}
                 currentTours={currentTours}
                 filteredLength={filteredTours.length}
+                onTourUpdated={(updated) =>
+                    setTours(prev => prev.map(t => t.tour_id === updated.tour_id ? updated : t))
+                }
+                onTourDeleted={(deletedId) =>
+                    setTours(prev => prev.filter(t => t.tour_id !== deletedId))
+                }
             />
 
             {/* Tour Pagination */}

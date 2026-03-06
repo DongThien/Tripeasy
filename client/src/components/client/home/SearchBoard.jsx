@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, Calendar, Wallet } from "lucide-react";
+import { MapPin, Calendar, Wallet } from 'lucide-react';
 
 const SearchBoard = () => (
     <div className="absolute left-1/2 -translate-x-1/2 bottom-[-40px] w-full max-w-4xl z-20">

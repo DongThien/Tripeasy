@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, ArrowRight } from "lucide-react";
+import { MapPin, ArrowRight } from 'lucide-react';
 
 const TourCard = ({ tour }) => (
     <div className="bg-white rounded-xl shadow overflow-hidden flex flex-col">
@@ -9,7 +9,6 @@ const TourCard = ({ tour }) => (
                 alt={tour.name}
                 className="w-full aspect-[4/3] object-cover"
             />
-            {/* Badge top left */}
             {tour.badge.text && (
                 <span
                     className={`absolute top-3 left-3 px-3 py-1 text-xs font-bold text-white rounded-full ${tour.badge.color} shadow`}
@@ -17,7 +16,6 @@ const TourCard = ({ tour }) => (
                     {tour.badge.text}
                 </span>
             )}
-            {/* Duration badge bottom left */}
             <span className="absolute bottom-3 left-3 px-2 py-1 text-xs font-semibold bg-black/70 text-white rounded">
                 {tour.duration}
             </span>
