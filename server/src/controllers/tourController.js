@@ -3,12 +3,15 @@ import { pgPool } from "../config/db.js";
 // GET /api/tours - Lấy tất cả tours (không limit mặc định)
 export const getAllTours = async (req, res) => {
     try {
-        const { destination, title, limit, offset } = req.query;
+        const { destination, region, title, limit, offset } = req.query;
         let baseQuery = "SELECT * FROM tours WHERE 1=1";
         const params = [];
         let idx = 1;
 
-        if (destination) {
+        if (region) {
+            baseQuery += ` AND region = $${idx++}`;
+            params.push(region);
+        } else if (destination) {
             baseQuery += ` AND destination = $${idx++}`;
             params.push(destination);
         }
@@ -59,6 +62,7 @@ export const createTour = async (req, res) => {
         const {
             title,
             destination,
+            region,
             duration,
             max_guests, // Frontend gửi max_guests
             price_adult,
@@ -66,6 +70,10 @@ export const createTour = async (req, res) => {
             description,
             itinerary
         } = req.body;
+
+        // Debug: Log received data
+        console.log('Received region:', region);
+        console.log('All received data:', req.body);
 
         // Validation cơ bản
         if (!title || !destination || !price_adult) {
@@ -89,7 +97,7 @@ export const createTour = async (req, res) => {
         const cleanPriceAdult = (price_adult || '').toString().replace(/\D/g, '');
         const cleanPriceChild = (price_child || '').toString().replace(/\D/g, '');
         const cleanMaxGuests = (max_guests || '').toString().replace(/\D/g, '');
-        
+
         const adultPrice = parseInt(cleanPriceAdult, 10) || 0;
         const childPrice = parseInt(cleanPriceChild, 10) || 0;
         const guestQuantity = parseInt(cleanMaxGuests, 10) || 1;
@@ -97,20 +105,21 @@ export const createTour = async (req, res) => {
         // Step 1: Insert vào bảng tours
         const insertTourQuery = `
             INSERT INTO tours (
-                title, destination, duration, quantity, 
+                title, destination, region, duration, quantity, 
                 price_adult, price_child, 
                 description, itinerary, availability, created_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
             RETURNING tour_id
         `;
 
         const tourValues = [
             title,
             destination,
+            region || null,
             duration,
-            guestQuantity, // Use cleaned max_guests
-            adultPrice, // Use cleaned price_adult
-            childPrice, // Use cleaned price_child
+            guestQuantity,
+            adultPrice,
+            childPrice,
             description,
             JSON.stringify(parsedItinerary), // Lưu dạng JSONB
             true // availability default true

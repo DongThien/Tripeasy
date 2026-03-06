@@ -28,9 +28,9 @@ const TourFilters = ({
                 onChange={e => setRegion(e.target.value)}
             >
                 <option value="Tất cả">🗺️ Tất cả khu vực</option>
-                <option>Miền Bắc</option>
-                <option>Miền Trung</option>
-                <option>Miền Nam</option>
+                <option value="Miền Bắc">Miền Bắc</option>
+                <option value="Miền Trung">Miền Trung</option>
+                <option value="Miền Nam">Miền Nam</option>
             </select>
             <select
                 className="bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 w-full md:w-1/4"

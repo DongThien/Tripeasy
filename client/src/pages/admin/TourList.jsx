@@ -49,7 +49,7 @@ const TourList = () => {
     // Optional: Filter logic (if needed)
     const filteredTours = Array.isArray(tours) ? tours.filter(tour => {
         const matchSearch = tour.title?.toLowerCase().includes(search.toLowerCase());
-        const matchRegion = region === "Tất cả" || tour.destination === region;
+        const matchRegion = region === "Tất cả" || tour.region === region;
         const matchStatus = status === "Tất cả" || (status === "Đang hoạt động" ? tour.availability === true : tour.availability === false);
         const matchDuration = duration === "Tất cả" || tour.duration === duration;
         return matchSearch && matchRegion && matchStatus && matchDuration;
