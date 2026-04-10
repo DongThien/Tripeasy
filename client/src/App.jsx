@@ -16,6 +16,11 @@ const AdminCustomers = React.lazy(() => import('./pages/admin/AdminCustomers'));
 // Client Pages
 const ClientHome = React.lazy(() => import('./pages/client/Home'));
 const ClientAbout = React.lazy(() => import('./pages/client/About'));
+const ClientTourList = React.lazy(() => import('./pages/client/ClientTourList'));
+const TourDetail = React.lazy(() => import('./pages/client/TourDetail'));
+const Contact = React.lazy(() => import('./pages/client/Contact'));
+const Login = React.lazy(() => import('./pages/auth/Login'));
+const Register = React.lazy(() => import('./pages/auth/Register'));
 
 const App = () => (
     <React.Suspense fallback={<div>Loading...</div>}>
@@ -32,9 +37,14 @@ const App = () => (
                 <Route path="settings" element={<div>Settings Page - Coming Soon</div>} />
                 <Route path="contact" element={<div>Contact Page - Coming Soon</div>} />
             </Route>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route path="/client" element={<ClientLayout />}>
                 <Route index element={<ClientHome />} />
                 <Route path="about" element={<ClientAbout />} />
+                <Route path="tours" element={<ClientTourList />} />
+                <Route path="tours/:id" element={<TourDetail />} />
+                <Route path="contact" element={<Contact />} />
                 {/* Thêm các route client khác tại đây */}
             </Route>
             <Route path="*" element={<div>404 Not Found</div>} />
