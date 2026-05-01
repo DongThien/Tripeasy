@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import axiosClient from '../../services/axiosClient';
+import { compressImages } from '../../utils/imageCompressor';
+import { uploadTourImagesBackground } from '../../services/imageUploadService';
 import TourBasicInfoSection from '../../components/admin/addTour/TourBasicInfoSection';
 import TourPricingSection from '../../components/admin/addTour/TourPricingSection';
 import TourImageUploadSection from '../../components/admin/addTour/TourImageUploadSection';
@@ -30,6 +33,8 @@ const AddTour = () => {
     const [itinerary, setItinerary] = useState([
         { day: 1, title: '', content: '' }
     ]);
+    const [isCompressing, setIsCompressing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Handle form input changes
     const handleInputChange = (field, value) => {
@@ -39,27 +44,53 @@ const AddTour = () => {
         }));
     };
 
-    // Handle image upload
-    const handleImageUpload = (e) => {
+    // Handle image upload với nén ảnh
+    const handleImageUpload = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        const newPreviews = files.map(file => URL.createObjectURL(file));
+        setIsCompressing(true);
+        try {
+            // Nén ảnh tự động
+            const compressedFiles = await compressImages(files);
 
-        setImages(prev => [...prev, ...files]);
-        setImagePreviews(prev => [...prev, ...newPreviews]);
+            // Tạo preview từ ảnh đã nén
+            const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
+
+            setImages(prev => [...prev, ...compressedFiles]);
+            setImagePreviews(prev => [...prev, ...newPreviews]);
+
+            toast.success(`✅ ${compressedFiles.length} ảnh đã sẵn sàng (đã nén)`);
+        } catch (error) {
+            toast.error('❌ Lỗi nén ảnh: ' + error.message);
+        } finally {
+            setIsCompressing(false);
+        }
     };
 
-    // Handle drag and drop
-    const handleDrop = (e) => {
+    // Handle drag and drop với nén ảnh
+    const handleDrop = async (e) => {
         e.preventDefault();
         const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
         if (files.length === 0) return;
 
-        const newPreviews = files.map(file => URL.createObjectURL(file));
+        setIsCompressing(true);
+        try {
+            // Nén ảnh tự động
+            const compressedFiles = await compressImages(files);
 
-        setImages(prev => [...prev, ...files]);
-        setImagePreviews(prev => [...prev, ...newPreviews]);
+            // Tạo preview từ ảnh đã nén
+            const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
+
+            setImages(prev => [...prev, ...compressedFiles]);
+            setImagePreviews(prev => [...prev, ...newPreviews]);
+
+            toast.success(`✅ ${compressedFiles.length} ảnh đã sẵn sàng (đã nén)`);
+        } catch (error) {
+            toast.error('❌ Lỗi nén ảnh: ' + error.message);
+        } finally {
+            setIsCompressing(false);
+        }
     };
 
     // Remove image
@@ -98,16 +129,20 @@ const AddTour = () => {
         navigate('/admin/tours');
     };
 
-    // Handle form submission
+    // Handle form submission - GIẢI PHÁP 2: Lưu tour trước, upload ảnh sau
     const handleSubmit = async () => {
         try {
             // Validation cơ bản
             if (!formData.title || !formData.destination || !formData.price_adult) {
-                alert('Vui lòng điền đầy đủ thông tin bắt buộc (Tên tour, Điểm đến, Giá người lớn)');
+                toast.error('Vui lòng điền đầy đủ thông tin bắt buộc (Tên tour, Điểm đến, Giá người lớn)');
                 return;
             }
 
-            // Create FormData object
+            setIsSubmitting(true);
+            // Hiển thị loading
+            const toastId = toast.loading('⏳ Đang lưu tour...');
+
+            // Create FormData object - KHÔNG bao gồm ảnh
             const formDataToSend = new FormData();
 
             // Add form fields with special handling for price fields
@@ -137,21 +172,11 @@ const AddTour = () => {
             // Add itinerary as JSON string
             formDataToSend.append('itinerary', JSON.stringify(itinerary));
 
-            // Add images
-            images.forEach(image => {
-                formDataToSend.append('images', image);
-            });
+            // ⭐ KHÔNG thêm ảnh vào FormData - sẽ upload riêng sau
 
-            console.log('Sending form data to API...');
+            console.log('Sending tour data (without images) to API...');
 
-            // Debug: Log the region value being sent
-            console.log('Region value:', formData.region);
-            console.log('FormData entries:');
-            for (let [key, value] of formDataToSend.entries()) {
-                console.log(`${key}:`, value);
-            }
-
-            // Call API
+            // Call API - Lưu tour trước
             const response = await axiosClient.post('/tours', formDataToSend, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -159,10 +184,19 @@ const AddTour = () => {
             });
 
             if (response.data.success) {
-                alert('Tour đã được tạo thành công!');
-                console.log('Tour created:', response.data.data);
+                const tourId = response.data.data.tour_id;
 
-                // Reset form sau khi thành công
+                // ✅ Tour được lưu thành công ngay lập tức
+                toast.success('✅ Tour đã được tạo thành công!', {
+                    id: toastId,
+                });
+
+                console.log('Tour created with ID:', tourId);
+
+                // Lưu danh sách ảnh cần upload ở background
+                const imagesToUpload = images.length > 0 ? [...images] : [];
+
+                // Reset form
                 setFormData({
                     title: '',
                     destination: '',
@@ -180,12 +214,29 @@ const AddTour = () => {
                 setItinerary([
                     { day: 1, title: '', content: '' }
                 ]);
+
+                // Chuyển về trang tours
+                setTimeout(() => {
+                    setIsSubmitting(false);
+                    navigate('/admin/tours');
+                }, 1000);
+
+                // 🎯 Upload ảnh ở BACKGROUND - không block UI
+                if (imagesToUpload.length > 0) {
+                    uploadTourImagesBackground(tourId, imagesToUpload);
+                }
             } else {
-                alert('Có lỗi xảy ra: ' + response.data.message);
+                toast.error('❌ Có lỗi xảy ra: ' + response.data.message, {
+                    id: toastId,
+                });
+                setIsSubmitting(false);
             }
         } catch (error) {
             console.error('Error submitting tour:', error);
-            alert('Có lỗi xảy ra khi tạo tour: ' + (error.response?.data?.message || error.message));
+            toast.error('❌ Lỗi tạo tour: ' + (error.response?.data?.message || error.message), {
+                duration: 4000,
+            });
+            setIsSubmitting(false);
         }
     };
 
@@ -210,6 +261,7 @@ const AddTour = () => {
                     handleImageUpload={handleImageUpload}
                     handleDrop={handleDrop}
                     removeImage={removeImage}
+                    isCompressing={isCompressing}
                 />
 
                 <TourDescriptionSection
@@ -227,6 +279,7 @@ const AddTour = () => {
                 <TourFormActions
                     handleCancel={handleCancel}
                     handleSubmit={handleSubmit}
+                    isLoading={isSubmitting}
                 />
             </div>
         </div>

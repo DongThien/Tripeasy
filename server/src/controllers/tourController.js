@@ -55,7 +55,7 @@ export const getAllTours = async (req, res) => {
     }
 };
 
-// POST /api/tours - Tạo tour mới (bao gồm upload ảnh)
+// POST /api/tours - Tạo tour mới (GIẢI PHÁP 2: Không upload ảnh - sẽ upload riêng sau)
 export const createTour = async (req, res) => {
     const client = await pgPool.connect();
 
@@ -78,6 +78,7 @@ export const createTour = async (req, res) => {
         // Debug: Log received data
         console.log('Received region:', region);
         console.log('All received data:', req.body);
+        console.log('⭐ GIẢI PHÁP 2: Lưu tour trước, upload ảnh sau');
 
         // Validation cơ bản
         if (!title || !destination || !price_adult) {
@@ -106,7 +107,7 @@ export const createTour = async (req, res) => {
         const childPrice = parseInt(cleanPriceChild, 10) || 0;
         const guestQuantity = parseInt(cleanMaxGuests, 10) || 1;
 
-        // Step 1: Insert vào bảng tours
+        // Step 1: Insert vào bảng tours (KHÔNG có ảnh)
         const insertTourQuery = `
             INSERT INTO tours (
                 title, destination, region, duration, quantity, 
@@ -132,31 +133,21 @@ export const createTour = async (req, res) => {
         const tourResult = await client.query(insertTourQuery, tourValues);
         const tourId = tourResult.rows[0].tour_id;
 
-        // Step 2: Insert ảnh vào bảng images (nếu có)
-        if (req.files && req.files.length > 0) {
-            const imageInsertPromises = req.files.map(file => {
-                const insertImageQuery = `
-                    INSERT INTO images (tour_id, image_url, upload_date) 
-                    VALUES ($1, $2, NOW())
-                `;
-                return client.query(insertImageQuery, [tourId, file.path]);
-            });
-
-            await Promise.all(imageInsertPromises);
-        }
+        // ⭐ KHÔNG upload ảnh trong createTour
+        // Ảnh sẽ được upload riêng qua endpoint POST /tours/:id/images
 
         // Commit transaction
         await client.query('COMMIT');
 
-        console.log(`Tour created successfully with ID: ${tourId}, Images: ${req.files?.length || 0}`);
+        console.log(`✅ Tour created successfully with ID: ${tourId} (Images will be uploaded separately)`);
 
         res.status(201).json({
             success: true,
             data: {
                 tour_id: tourId,
-                images_count: req.files?.length || 0
+                images_count: 0
             },
-            message: "Tour được tạo thành công"
+            message: "Tour được tạo thành công. Ảnh sẽ được upload ở background."
         });
 
     } catch (err) {
@@ -268,5 +259,65 @@ export const deleteTour = async (req, res) => {
         res.json({ success: true, data: rows[0], message: "Tour deleted successfully" });
     } catch (err) {
         res.status(500).json({ success: false, data: null, message: err.message });
+    }
+};
+
+// POST /api/tours/:id/images - Upload ảnh riêng (GIẢI PHÁP 2 - upload ảnh sau khi tour được tạo)
+export const uploadTourImages = async (req, res) => {
+    try {
+        const { id: tourId } = req.params;
+
+        // Kiểm tra tour có tồn tại
+        const tourCheckQuery = "SELECT tour_id FROM tours WHERE tour_id = $1";
+        const tourCheckResult = await pgPool.query(tourCheckQuery, [tourId]);
+
+        if (tourCheckResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                data: null,
+                message: "Tour không tồn tại"
+            });
+        }
+
+        // Kiểm tra có ảnh trong request
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({
+                success: false,
+                data: null,
+                message: "Không có ảnh được gửi"
+            });
+        }
+
+        console.log(`Uploading ${req.files.length} images for tour ${tourId}`);
+
+        // Insert ảnh vào database
+        const imageInsertPromises = req.files.map(file => {
+            const insertImageQuery = `
+                INSERT INTO images (tour_id, image_url, upload_date) 
+                VALUES ($1, $2, NOW())
+            `;
+            return pgPool.query(insertImageQuery, [tourId, file.path]);
+        });
+
+        await Promise.all(imageInsertPromises);
+
+        console.log(`Successfully uploaded ${req.files.length} images for tour ${tourId}`);
+
+        res.status(201).json({
+            success: true,
+            data: {
+                tour_id: tourId,
+                images_count: req.files.length
+            },
+            message: `Đã upload thành công ${req.files.length} ảnh`
+        });
+
+    } catch (err) {
+        console.error("Error in uploadTourImages:", err);
+        res.status(500).json({
+            success: false,
+            data: null,
+            message: "Lỗi server khi upload ảnh: " + err.message
+        });
     }
 };
