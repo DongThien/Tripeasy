@@ -1,48 +1,79 @@
 import React from 'react';
 import { MapPin, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { formatVND } from '../../../utils/formatHelper';
 
-const TourCard = ({ tour }) => (
-    <div className="bg-white rounded-xl shadow overflow-hidden flex flex-col">
-        <div className="relative">
-            <img
-                src={tour.image}
-                alt={tour.name}
-                className="w-full aspect-[4/3] object-cover"
-            />
-            {tour.badge.text && (
-                <span
-                    className={`absolute top-3 left-3 px-3 py-1 text-xs font-bold text-white rounded-full ${tour.badge.color} shadow`}
-                >
-                    {tour.badge.text}
+const FALLBACK_IMG = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=800";
+
+const TourCard = ({ tour }) => {
+    if (!tour) return null;
+
+    const title = tour.title || tour.name || 'Đang cập nhật';
+    const region = tour.region || tour.destination || 'Việt Nam';
+    const duration = tour.duration || 'Liên hệ';
+
+    // Xử lý ảnh an toàn
+    let imageUrl = FALLBACK_IMG;
+    if (tour.image_url) imageUrl = tour.image_url;
+    else if (tour.image) imageUrl = tour.image;
+    else if (Array.isArray(tour.images) && tour.images.length > 0) imageUrl = tour.images[0];
+
+    const currentPrice = tour.price_adult ? formatVND(tour.price_adult) : (tour.price || 'Liên hệ');
+    const oldPrice = tour.old_price ? formatVND(tour.old_price) : tour.oldPrice;
+
+    // LINK CHUẨN (Không có /client/)
+    const detailLink = `/client/tours/${tour.tour_id || tour.id}`;
+
+    return (
+        <Link
+            to={detailLink}
+            className="bg-white rounded-xl shadow overflow-hidden flex flex-col group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+        >
+            <div className="relative overflow-hidden">
+                <img
+                    src={imageUrl}
+                    alt={title}
+                    className="w-full aspect-[4/3] object-cover transition-transform duration-700 group-hover:scale-110"
+                    onError={(e) => { e.target.src = FALLBACK_IMG; }}
+                />
+
+                {tour.badge?.text && (
+                    <span className={`absolute top-3 left-3 px-3 py-1 text-xs font-bold text-white rounded-full ${tour.badge.color || 'bg-red-500'} shadow`}>
+                        {tour.badge.text}
+                    </span>
+                )}
+
+                <span className="absolute bottom-3 left-3 px-2 py-1 text-xs font-semibold bg-black/70 backdrop-blur-sm text-white rounded shadow-sm">
+                    {duration}
                 </span>
-            )}
-            <span className="absolute bottom-3 left-3 px-2 py-1 text-xs font-semibold bg-black/70 text-white rounded">
-                {tour.duration}
-            </span>
-        </div>
-        <div className="flex-1 flex flex-col p-4">
-            <div className="flex items-center gap-1 text-sm mb-1">
-                <MapPin className="w-4 h-4 text-[#8B1A1A]" />
-                <span className="font-medium text-gray-700">{tour.region}</span>
             </div>
-            <div className="font-bold text-gray-900 text-base mb-2 line-clamp-2">
-                {tour.name}
-            </div>
-            <div className="mt-auto flex items-center justify-between">
-                <div>
-                    {tour.oldPrice && (
-                        <span className="text-gray-400 text-sm line-through mr-1">
-                            {tour.oldPrice}
-                        </span>
-                    )}
-                    <span className="text-[#8B1A1A] font-bold text-lg">{tour.price}</span>
+
+            <div className="flex-1 flex flex-col p-4">
+                <div className="flex items-center gap-1 text-xs mb-2">
+                    <MapPin className="w-3.5 h-3.5 text-[#8B1A1A]" />
+                    <span className="font-semibold text-gray-500 uppercase tracking-wide">{region}</span>
                 </div>
-                <button className="bg-red-100 p-2 rounded-full hover:bg-red-200 transition">
-                    <ArrowRight className="w-5 h-5 text-[#8B1A1A]" />
-                </button>
+
+                <div className="font-bold text-gray-900 text-base mb-3 line-clamp-2 leading-snug group-hover:text-[#8B1A1A] transition-colors">
+                    {title}
+                </div>
+
+                <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-3">
+                    <div>
+                        {oldPrice && (
+                            <span className="text-gray-400 text-sm line-through mr-2 block sm:inline">
+                                {oldPrice}
+                            </span>
+                        )}
+                        <span className="text-[#8B1A1A] font-extrabold text-lg">{currentPrice}</span>
+                    </div>
+                    <div className="bg-red-50 p-2 rounded-full group-hover:bg-[#8B1A1A] transition-colors duration-300">
+                        <ArrowRight className="w-5 h-5 text-[#8B1A1A] group-hover:text-white transition-colors" />
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-);
+        </Link>
+    );
+};
 
 export default TourCard;

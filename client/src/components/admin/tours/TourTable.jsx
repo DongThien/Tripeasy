@@ -58,18 +58,21 @@ const TourTable = ({ isLoading, currentTours, filteredLength, onTourUpdated, onT
                             </tr>
                         ) : (
                             currentTours.map(tour => (
-                                <tr key={tour.tour_id} className="border-t last:border-b hover:bg-gray-50">
+                                /* ĐÃ FIX LỖI KEY Ở ĐÂY: Dùng tour_id (dữ liệu thật) hoặc id (dữ liệu giả) */
+                                <tr key={tour.tour_id || tour.id} className="border-t last:border-b hover:bg-gray-50">
                                     <td className="py-3 px-3">
                                         <div className="flex items-center gap-3 min-w-0">
                                             <img
-                                                src={tour.image_url || FALLBACK_IMG}
+                                                src={tour.image_url || tour.imageUrl || FALLBACK_IMG}
                                                 alt={tour.title}
                                                 className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
                                                 onError={e => { e.target.onerror = null; e.target.src = FALLBACK_IMG; }}
                                             />
                                             <div className="min-w-0 flex-1">
                                                 <div className="font-semibold text-gray-900 line-clamp-2">{tour.title}</div>
-                                                <div className="text-xs text-gray-500 truncate">Mã: TRP-{tour.tour_id}</div>
+                                                <div className="text-xs text-gray-500 truncate">
+                                                    Mã: TRP-{tour.tour_id || tour.id}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -81,13 +84,13 @@ const TourTable = ({ isLoading, currentTours, filteredLength, onTourUpdated, onT
                                     <td className="py-3 px-3">
                                         <div className="text-left">{tour.duration}</div>
                                     </td>
-                                    <td className="py-3 px-3 text-center">{tour.quantity}</td>
+                                    <td className="py-3 px-3 text-center">{tour.quantity || tour.maxGuests || 0}</td>
                                     <td className="py-3 px-3 text-right font-bold text-gray-900 whitespace-nowrap">
-                                        {formatVND(tour.price_adult)}
+                                        {formatVND(tour.price_adult || tour.price)}
                                     </td>
                                     <td className="py-3 px-3 text-center">
                                         <div className="min-w-[100px]">
-                                            {tour.availability ? (
+                                            {(tour.availability === true || tour.status === 'active') ? (
                                                 <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold flex items-center justify-center gap-1 whitespace-nowrap">
                                                     <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                                                     Đang hoạt động

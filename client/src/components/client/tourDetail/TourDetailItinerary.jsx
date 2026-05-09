@@ -1,45 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { ChevronDown, MapPin } from 'lucide-react';
 
-const TourDetailItinerary = ({ itinerary }) => (
-    <section className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-100 md:p-6">
-        <h2 className="text-2xl font-bold text-gray-900">Lịch trình chi tiết</h2>
+const TourDetailItinerary = ({ itinerary }) => {
+    const [openDay, setOpenDay] = useState(0); // Mặc định mở ngày đầu tiên
 
-        <div className="mt-6 space-y-5">
-            {itinerary.map((item) => (
-                <article key={item.day} className="relative pl-11 md:pl-12">
-                    <span className="absolute left-0 top-1.5 inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-[#8B1A1A] px-2 text-xs font-semibold text-white">
-                        {item.day}
-                    </span>
-                    {item.day !== itinerary[itinerary.length - 1].day ? (
-                        <span className="absolute left-[13px] top-9 h-[calc(100%+8px)] w-px bg-[#8B1A1A]/25" />
-                    ) : null}
-
-                    <div className="rounded-lg bg-[#FAF8F8] p-4 ring-1 ring-gray-100 md:p-5">
-                        <div className="mb-2 flex flex-wrap items-center gap-2">
-                            <h3 className="text-lg font-bold text-gray-900">
-                                Ngày {item.day}: {item.title}
-                            </h3>
-                            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
-                                Ăn sáng, trưa, tối
-                            </span>
-                        </div>
-                        <p className="text-sm leading-6 text-gray-600">{item.content}</p>
-
-                        <div className="mt-3 grid grid-cols-2 gap-2 md:gap-3">
-                            {item.images.slice(0, 2).map((img) => (
-                                <img
-                                    key={img}
-                                    src={img}
-                                    alt={`Ngày ${item.day}`}
-                                    className="h-24 w-full rounded-md object-cover md:h-28"
-                                />
-                            ))}
-                        </div>
+    return (
+        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
+            <h3 className="text-xl font-black text-gray-900 mb-8 uppercase tracking-tight border-l-4 border-[#8B1A1A] pl-4">Lịch trình chi tiết</h3>
+            <div className="space-y-4">
+                {itinerary.map((day, idx) => (
+                    <div key={idx} className="border border-gray-100 rounded-2xl overflow-hidden">
+                        <button
+                            onClick={() => setOpenDay(openDay === idx ? null : idx)}
+                            className={`w-full flex items-center justify-between p-5 text-left transition-colors ${openDay === idx ? 'bg-red-50' : 'bg-white'}`}
+                        >
+                            <div className="flex items-center gap-4">
+                                <span className="w-12 h-12 rounded-xl bg-[#8B1A1A] text-white flex flex-col items-center justify-center shrink-0">
+                                    <span className="text-[10px] font-bold uppercase opacity-80">Ngày</span>
+                                    <span className="text-lg font-black">{day.day}</span>
+                                </span>
+                                <span className="font-bold text-gray-900">{day.title}</span>
+                            </div>
+                            <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${openDay === idx ? 'rotate-180' : ''}`} />
+                        </button>
+                        {openDay === idx && (
+                            <div className="p-6 bg-white border-t border-gray-50 text-gray-600 leading-relaxed text-sm whitespace-pre-line animate-fadeIn">
+                                {day.content}
+                            </div>
+                        )}
                     </div>
-                </article>
-            ))}
+                ))}
+            </div>
         </div>
-    </section>
-);
+    );
+};
 
 export default TourDetailItinerary;

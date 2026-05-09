@@ -4,238 +4,142 @@ import toast from 'react-hot-toast';
 import axiosClient from '../../services/axiosClient';
 import { compressImages } from '../../utils/imageCompressor';
 import { uploadTourImagesBackground } from '../../services/imageUploadService';
+
 import TourBasicInfoSection from '../../components/admin/addTour/TourBasicInfoSection';
 import TourPricingSection from '../../components/admin/addTour/TourPricingSection';
 import TourImageUploadSection from '../../components/admin/addTour/TourImageUploadSection';
-import TourDescriptionSection from '../../components/admin/addTour/TourDescriptionSection';
 import TourItinerarySection from '../../components/admin/addTour/TourItinerarySection';
 import TourFormActions from '../../components/admin/addTour/TourFormActions';
+import TourDeparturesSection from '../../components/admin/addTour/TourDeparturesSection';
+import TourExtrasSection from '../../components/admin/addTour/TourExtrasSection';
+import TourPoliciesSection from '../../components/admin/addTour/TourPoliciesSection';
 
 const AddTour = () => {
     const navigate = useNavigate();
 
-    // State Management
+    // 1. Khai báo Form State
     const [formData, setFormData] = useState({
-        title: '',
-        destination: '',
-        duration: '',
-        region: '',
-        max_guests: '',
-        start_date: '',
-        end_date: '',
-        price_adult: '',
-        price_child: '',
-        description: ''
+        title: '', destination: '', duration: '', region: '', max_guests: '',
+        price_adult: '', price_child: '', old_price: '',
+        itinerary: '', highlights: '', included: '', excluded: '',
+        start_location: '', transport: '', category: ''
     });
 
     const [images, setImages] = useState([]);
     const [imagePreviews, setImagePreviews] = useState([]);
-    const [itinerary, setItinerary] = useState([
-        { day: 1, title: '', content: '' }
-    ]);
+    const [itinerary, setItinerary] = useState([{ day: 1, title: '', content: '' }]);
+
+    // State cho các trường MỚI
+    const [departures, setDepartures] = useState([{ start_date: '', end_date: '', stock: '' }]);
+    const [highlights, setHighlights] = useState([{ title: '', desc: '' }]);
+    const [included, setIncluded] = useState(['']);
+    const [excluded, setExcluded] = useState(['']);
+
     const [isCompressing, setIsCompressing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Handle form input changes
-    const handleInputChange = (field, value) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-    };
+    const [policyChild, setPolicyChild] = useState(['']);
+    const [policyCancel, setPolicyCancel] = useState(['']);
+    const [policyOther, setPolicyOther] = useState(['']);
 
-    // Handle image upload với nén ảnh
+    // Helpers
+    const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+
     const handleImageUpload = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
-
         setIsCompressing(true);
         try {
-            // Nén ảnh tự động
             const compressedFiles = await compressImages(files);
-
-            // Tạo preview từ ảnh đã nén
             const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
-
             setImages(prev => [...prev, ...compressedFiles]);
             setImagePreviews(prev => [...prev, ...newPreviews]);
-
             toast.success(`✅ ${compressedFiles.length} ảnh đã sẵn sàng (đã nén)`);
-        } catch (error) {
-            toast.error('❌ Lỗi nén ảnh: ' + error.message);
-        } finally {
-            setIsCompressing(false);
-        }
+        } catch (error) { toast.error('❌ Lỗi nén ảnh: ' + error.message); } finally { setIsCompressing(false); }
     };
 
-    // Handle drag and drop với nén ảnh
     const handleDrop = async (e) => {
         e.preventDefault();
         const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
         if (files.length === 0) return;
-
         setIsCompressing(true);
         try {
-            // Nén ảnh tự động
             const compressedFiles = await compressImages(files);
-
-            // Tạo preview từ ảnh đã nén
             const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
-
             setImages(prev => [...prev, ...compressedFiles]);
             setImagePreviews(prev => [...prev, ...newPreviews]);
-
             toast.success(`✅ ${compressedFiles.length} ảnh đã sẵn sàng (đã nén)`);
-        } catch (error) {
-            toast.error('❌ Lỗi nén ảnh: ' + error.message);
-        } finally {
-            setIsCompressing(false);
-        }
+        } catch (error) { toast.error('❌ Lỗi nén ảnh: ' + error.message); } finally { setIsCompressing(false); }
     };
 
-    // Remove image
     const removeImage = (index) => {
-        const newImages = images.filter((_, i) => i !== index);
-        const newPreviews = imagePreviews.filter((_, i) => i !== index);
-
+        setImages(images.filter((_, i) => i !== index));
+        setImagePreviews(imagePreviews.filter((_, i) => i !== index));
         URL.revokeObjectURL(imagePreviews[index]);
-
-        setImages(newImages);
-        setImagePreviews(newPreviews);
     };
 
-    // Handle itinerary
-    const addItineraryDay = () => {
-        setItinerary(prev => [
-            ...prev,
-            { day: prev.length + 1, title: '', content: '' }
-        ]);
-    };
+    // Helpers cho Lịch trình & Lịch khởi hành
+    const addItineraryDay = () => setItinerary(prev => [...prev, { day: prev.length + 1, title: '', content: '' }]);
+    const removeItineraryDay = (index) => { if (itinerary.length > 1) setItinerary(prev => prev.filter((_, i) => i !== index)); };
+    const updateItinerary = (index, field, value) => setItinerary(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
 
-    const removeItineraryDay = (index) => {
-        if (itinerary.length > 1) {
-            setItinerary(prev => prev.filter((_, i) => i !== index));
-        }
-    };
+    const addDeparture = () => setDepartures(prev => [...prev, { start_date: '', end_date: '', stock: '' }]);
+    const removeDeparture = (index) => setDepartures(prev => prev.filter((_, i) => i !== index));
+    const updateDeparture = (index, field, value) => setDepartures(prev => prev.map((dep, i) => i === index ? { ...dep, [field]: value } : dep));
 
-    const updateItinerary = (index, field, value) => {
-        setItinerary(prev => prev.map((item, i) =>
-            i === index ? { ...item, [field]: value } : item
-        ));
-    };
+    const handleCancel = () => navigate('/admin/tours');
 
-    // Handle cancel action
-    const handleCancel = () => {
-        navigate('/admin/tours');
-    };
-
-    // Handle form submission - GIẢI PHÁP 2: Lưu tour trước, upload ảnh sau
+    // 2. Xử lý Nút LƯU
     const handleSubmit = async () => {
         try {
-            // Validation cơ bản
             if (!formData.title || !formData.destination || !formData.price_adult) {
-                toast.error('Vui lòng điền đầy đủ thông tin bắt buộc (Tên tour, Điểm đến, Giá người lớn)');
+                toast.error('Vui lòng điền đầy đủ Tên tour, Điểm đến và Giá người lớn!');
                 return;
             }
 
             setIsSubmitting(true);
-            // Hiển thị loading
             const toastId = toast.loading('⏳ Đang lưu tour...');
 
-            // Create FormData object - KHÔNG bao gồm ảnh
             const formDataToSend = new FormData();
-
-            // Add form fields with special handling for price fields
             Object.keys(formData).forEach(key => {
-                // Always send certain required fields even if empty
-                if (key === 'region') {
-                    formDataToSend.append(key, formData[key] || '');
-                }
-                else if (formData[key] !== null && formData[key] !== '') {
-                    // Clean price fields by removing all non-digit characters
-                    if (key === 'price_adult' || key === 'price_child') {
-                        const cleanPrice = formData[key].toString().replace(/\D/g, '');
-                        formDataToSend.append(key, cleanPrice || '0');
-                    }
-                    // Clean max_guests field
-                    else if (key === 'max_guests') {
-                        const cleanGuests = formData[key].toString().replace(/\D/g, '');
-                        formDataToSend.append(key, cleanGuests || '0');
-                    }
-                    // Other fields remain unchanged
-                    else {
-                        formDataToSend.append(key, formData[key]);
-                    }
+                if (key === 'price_adult' || key === 'price_child' || key === 'old_price' || key === 'max_guests') {
+                    const cleanNum = formData[key].toString().replace(/\D/g, '');
+                    formDataToSend.append(key, cleanNum || '0');
+                } else if (formData[key] !== null && formData[key] !== '') {
+                    formDataToSend.append(key, formData[key]);
                 }
             });
 
-            // Add itinerary as JSON string
+            // Parse Mảng dữ liệu thành JSON String trước khi gửi xuống DB
             formDataToSend.append('itinerary', JSON.stringify(itinerary));
+            formDataToSend.append('departures', JSON.stringify(departures.filter(d => d.start_date && d.end_date)));
+            formDataToSend.append('highlights', JSON.stringify(highlights.filter(h => h.title)));
+            formDataToSend.append('included', JSON.stringify(included.filter(i => i.trim() !== '')));
+            formDataToSend.append('excluded', JSON.stringify(excluded.filter(e => e.trim() !== '')));
+            formDataToSend.append('policy_child', JSON.stringify(policyChild.filter(i => i.trim() !== '')));
+            formDataToSend.append('policy_cancel', JSON.stringify(policyCancel.filter(i => i.trim() !== '')));
+            formDataToSend.append('policy_other', JSON.stringify(policyOther.filter(i => i.trim() !== '')));
 
-            // ⭐ KHÔNG thêm ảnh vào FormData - sẽ upload riêng sau
-
-            console.log('Sending tour data (without images) to API...');
-
-            // Call API - Lưu tour trước
-            const response = await axiosClient.post('/tours', formDataToSend, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+            const response = await axiosClient.post('/tours', formDataToSend, { headers: { 'Content-Type': 'multipart/form-data' } });
 
             if (response.data.success) {
                 const tourId = response.data.data.tour_id;
+                toast.success('✅ Tour đã được tạo thành công!', { id: toastId });
 
-                // ✅ Tour được lưu thành công ngay lập tức
-                toast.success('✅ Tour đã được tạo thành công!', {
-                    id: toastId,
-                });
+                if (images.length > 0) {
+                    uploadTourImagesBackground(tourId, [...images]);
+                }
 
-                console.log('Tour created with ID:', tourId);
-
-                // Lưu danh sách ảnh cần upload ở background
-                const imagesToUpload = images.length > 0 ? [...images] : [];
-
-                // Reset form
-                setFormData({
-                    title: '',
-                    destination: '',
-                    duration: '',
-                    region: '',
-                    max_guests: '',
-                    start_date: '',
-                    end_date: '',
-                    price_adult: '',
-                    price_child: '',
-                    description: ''
-                });
-                setImages([]);
-                setImagePreviews([]);
-                setItinerary([
-                    { day: 1, title: '', content: '' }
-                ]);
-
-                // Chuyển về trang tours
                 setTimeout(() => {
                     setIsSubmitting(false);
                     navigate('/admin/tours');
                 }, 1000);
-
-                // 🎯 Upload ảnh ở BACKGROUND - không block UI
-                if (imagesToUpload.length > 0) {
-                    uploadTourImagesBackground(tourId, imagesToUpload);
-                }
             } else {
-                toast.error('❌ Có lỗi xảy ra: ' + response.data.message, {
-                    id: toastId,
-                });
+                toast.error('❌ Có lỗi xảy ra: ' + response.data.message, { id: toastId });
                 setIsSubmitting(false);
             }
         } catch (error) {
-            console.error('Error submitting tour:', error);
-            toast.error('❌ Lỗi tạo tour: ' + (error.response?.data?.message || error.message), {
-                duration: 4000,
-            });
+            toast.error('❌ Lỗi tạo tour: ' + (error.response?.data?.message || error.message));
             setIsSubmitting(false);
         }
     };
@@ -243,44 +147,36 @@ const AddTour = () => {
     return (
         <div className="w-full">
             <div className="max-w-5xl mx-auto space-y-6">
-                <TourBasicInfoSection
-                    formData={formData}
-                    handleInputChange={handleInputChange}
+                <TourBasicInfoSection formData={formData} handleInputChange={handleInputChange} />
+
+                {/* Khu vực tạo Lịch Khởi Hành (Mới) */}
+                <TourDeparturesSection
+                    departures={departures} addDeparture={addDeparture}
+                    removeDeparture={removeDeparture} updateDeparture={updateDeparture}
                 />
 
-                <TourPricingSection
-                    formData={formData}
-                    handleInputChange={handleInputChange}
+                <TourPricingSection formData={formData} handleInputChange={handleInputChange} />
+
+                {/* Khu vực tạo Điểm nhấn & Dịch vụ (Mới) */}
+                <TourExtrasSection
+                    highlights={highlights} setHighlights={setHighlights}
+                    included={included} setIncluded={setIncluded}
+                    excluded={excluded} setExcluded={setExcluded}
+                />
+
+                <TourPoliciesSection
+                    policyChild={policyChild} setPolicyChild={setPolicyChild}
+                    policyCancel={policyCancel} setPolicyCancel={setPolicyCancel}
+                    policyOther={policyOther} setPolicyOther={setPolicyOther}
                 />
 
                 <TourImageUploadSection
-                    images={images}
-                    setImages={setImages}
-                    imagePreviews={imagePreviews}
-                    setImagePreviews={setImagePreviews}
-                    handleImageUpload={handleImageUpload}
-                    handleDrop={handleDrop}
-                    removeImage={removeImage}
-                    isCompressing={isCompressing}
+                    images={images} setImages={setImages} imagePreviews={imagePreviews}
+                    setImagePreviews={setImagePreviews} handleImageUpload={handleImageUpload}
+                    handleDrop={handleDrop} removeImage={removeImage} isCompressing={isCompressing}
                 />
-
-                <TourDescriptionSection
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                />
-
-                <TourItinerarySection
-                    itinerary={itinerary}
-                    addItineraryDay={addItineraryDay}
-                    removeItineraryDay={removeItineraryDay}
-                    updateItinerary={updateItinerary}
-                />
-
-                <TourFormActions
-                    handleCancel={handleCancel}
-                    handleSubmit={handleSubmit}
-                    isLoading={isSubmitting}
-                />
+                <TourItinerarySection itinerary={itinerary} addItineraryDay={addItineraryDay} removeItineraryDay={removeItineraryDay} updateItinerary={updateItinerary} />
+                <TourFormActions handleCancel={handleCancel} handleSubmit={handleSubmit} isLoading={isSubmitting} />
             </div>
         </div>
     );

@@ -17,40 +17,37 @@ const TourBasicInfoSection = ({ formData, handleInputChange }) => {
                     <input
                         type="text"
                         placeholder="Nhập tên tour"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
                         value={formData.title}
                         onChange={(e) => handleInputChange('title', e.target.value)}
                     />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Điểm đến</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Điểm đến (Tỉnh/Thành)</label>
                         <input
                             type="text"
                             placeholder="Ví dụ: Đà Nẵng, Phú Quốc..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
                             value={formData.destination}
                             onChange={(e) => handleInputChange('destination', e.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Thời gian</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Nơi khởi hành</label>
                         <input
                             type="text"
-                            placeholder="Ví dụ: 3N2Đ"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                            value={formData.duration}
-                            onChange={(e) => handleInputChange('duration', e.target.value)}
+                            placeholder="Ví dụ: Hà Nội, TP.HCM..."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            value={formData.start_location}
+                            onChange={(e) => handleInputChange('start_location', e.target.value)}
                         />
                     </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Khu vực</label>
                         <select
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
                             value={formData.region}
                             onChange={(e) => handleInputChange('region', e.target.value)}
                         >
@@ -60,37 +57,53 @@ const TourBasicInfoSection = ({ formData, handleInputChange }) => {
                             <option value="Miền Nam">Miền Nam</option>
                         </select>
                     </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Số lượng</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Thời lượng</label>
+                        <input
+                            type="text"
+                            placeholder="Ví dụ: 3N2Đ"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            value={formData.duration}
+                            onChange={(e) => handleInputChange('duration', e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Số lượng tối đa</label>
                         <input
                             type="number"
                             min="1"
                             placeholder="Ví dụ: 20"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
                             value={formData.max_guests}
                             onChange={(e) => handleInputChange('max_guests', e.target.value)}
                         />
                     </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Ngày khởi hành</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phương tiện</label>
                         <input
-                            type="date"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                            value={formData.start_date}
-                            onChange={(e) => handleInputChange('start_date', e.target.value)}
+                            type="text"
+                            placeholder="Máy bay, Ô tô..."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            value={formData.transport}
+                            onChange={(e) => handleInputChange('transport', e.target.value)}
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Ngày kết thúc</label>
-                        <input
-                            type="date"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] focus:border-transparent outline-none"
-                            value={formData.end_date}
-                            onChange={(e) => handleInputChange('end_date', e.target.value)}
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Loại hình</label>
+                        <select
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
+                            value={formData.category}
+                            onChange={(e) => handleInputChange('category', e.target.value)}
+                        >
+                            <option value="">Chọn loại hình</option>
+                            <option value="Nghỉ dưỡng">Nghỉ dưỡng</option>
+                            <option value="Khám phá">Khám phá</option>
+                            <option value="Trekking">Trekking</option>
+                            <option value="Biển đảo">Biển đảo</option>
+                        </select>
                     </div>
                 </div>
             </div>
