@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Map, Ticket, Users, Settings, Phone, ChevronDown, Plus, List } from "lucide-react";
 
@@ -14,6 +14,33 @@ const menu = [
 const Sidebar = () => {
     const location = useLocation();
     const [openMenu, setOpenMenu] = useState(null);
+    const [user, setUser] = useState(() => {
+        const raw = localStorage.getItem('user');
+        return raw ? JSON.parse(raw) : null;
+    });
+
+    useEffect(() => {
+        const handleStorage = (event) => {
+            if (event.key === 'user') {
+                const nextUser = event.newValue ? JSON.parse(event.newValue) : null;
+                setUser(nextUser);
+            }
+        };
+        window.addEventListener('storage', handleStorage);
+        return () => window.removeEventListener('storage', handleStorage);
+    }, []);
+
+    const displayName = user?.username || user?.name || user?.email || 'Admin';
+    const displayRole = user?.role ? user.role.toUpperCase() : 'ADMIN';
+    const avatarLabel = useMemo(() => {
+        const source = (user?.username || user?.name || user?.email || 'TR').trim();
+        return source
+            .split(' ')
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((word) => word[0].toUpperCase())
+            .join('');
+    }, [user]);
     return (
         <aside className="w-64 h-screen bg-white border-r flex flex-col fixed left-0 top-0 z-20">
             <div className="p-6 text-2xl font-bold text-[#8B1A1A]">Tripeasy Admin</div>
@@ -97,14 +124,12 @@ const Sidebar = () => {
                 </ul>
             </nav>
             <div className="p-4 mt-auto flex items-center gap-3 border-t">
-                <img
-                    src="https://randomuser.me/api/portraits/men/41.jpg"
-                    alt="avatar"
-                    className="w-10 h-10 rounded-full object-cover"
-                />
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8B1A1A] text-xs font-semibold text-white">
+                    {avatarLabel}
+                </span>
                 <div>
-                    <div className="font-semibold text-gray-900">Alex Johnson</div>
-                    <div className="text-xs text-gray-400">Super Admin</div>
+                    <div className="font-semibold text-gray-900">{displayName}</div>
+                    <div className="text-xs text-gray-400">{displayRole}</div>
                 </div>
             </div>
         </aside>

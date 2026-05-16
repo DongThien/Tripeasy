@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, MapPin, User } from 'lucide-react';
+import toast from 'react-hot-toast';
+import axiosClient from '../../services/axiosClient';
 
 const HERO_SLIDES = [
     {
@@ -28,6 +30,7 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [currentSlide, setCurrentSlide] = useState(0);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -37,8 +40,34 @@ const Login = () => {
         return () => clearInterval(interval);
     }, []);
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
+        if (!email || !password) {
+            toast.error('Vui lòng nhập email/số điện thoại và mật khẩu');
+            return;
+        }
+        try {
+            const response = await axiosClient.post('/users/login', { email, password });
+            const { success, data, message } = response?.data || {};
+
+            if (success) {
+                localStorage.setItem('token', data?.token);
+                localStorage.setItem('user', JSON.stringify(data?.user));
+                toast.success(message || 'Đăng nhập thành công');
+                const role = data?.user?.role;
+                if (role === 'admin') {
+                    navigate('/admin/dashboard');
+                } else {
+                    navigate('/client');
+                }
+                return;
+            }
+
+            toast.error(message || 'Đăng nhập thất bại');
+        } catch (error) {
+            const message = error?.response?.data?.message || 'Đăng nhập thất bại';
+            toast.error(message);
+        }
     };
 
     return (
@@ -81,7 +110,11 @@ const Login = () => {
                                 <div>
                                     <div className="mb-2 flex items-center justify-between">
                                         <label className="block text-sm font-semibold text-gray-700">Mật khẩu</label>
-                                        <button type="button" className="text-sm font-medium text-[#8B1A1A] hover:underline">
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate('/forgot-password')}
+                                            className="text-sm font-medium text-[#8B1A1A] hover:underline"
+                                        >
                                             Quên mật khẩu?
                                         </button>
                                     </div>

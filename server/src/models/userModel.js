@@ -13,6 +13,14 @@ export const fetchUserByEmailRow = async (email) => {
     return rows[0];
 };
 
+export const fetchUserByEmailOrPhoneRow = async (identifier) => {
+    const { rows } = await pgPool.query(
+        "SELECT * FROM users WHERE email = $1 OR phone_number = $1",
+        [identifier]
+    );
+    return rows[0];
+};
+
 export const insertUserRow = async ({
     username,
     email,
@@ -24,7 +32,7 @@ export const insertUserRow = async ({
     const insertQuery = `
         INSERT INTO users (username, email, password, phone_number, address, ip_address)
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING user_id, username, email, phone_number, address, ip_address
+        RETURNING user_id, username, email, phone_number, address, ip_address, role
     `;
     const { rows } = await pgPool.query(insertQuery, [
         username,
@@ -39,7 +47,7 @@ export const insertUserRow = async ({
 
 export const fetchUserProfileRow = async (userId) => {
     const { rows } = await pgPool.query(
-        "SELECT user_id, username, email, phone_number, address, ip_address, is_active, status, created_at FROM users WHERE user_id = $1",
+        "SELECT user_id, username, email, phone_number, address, ip_address, role, is_active, status, created_at FROM users WHERE user_id = $1",
         [userId]
     );
     return rows[0];
@@ -49,7 +57,7 @@ export const fetchAllUsersRows = async (searchParam, statusParam) => {
     const query = `
         SELECT
             u.user_id, u.username, u.email, u.phone_number,
-            u.is_active, u.status, u.created_at,
+            u.is_active, u.status, u.created_at, u.role,
             COALESCE(SUM(b.total_price), 0) AS total_spent_raw,
             ${TIER_CASE_SQL} AS tier
         FROM users u
@@ -102,7 +110,7 @@ export const updateUserRow = async (userId, username, phone_number, address) => 
     const { rows } = await pgPool.query(
         `UPDATE users SET username = $1, phone_number = $2, address = $3
          WHERE user_id = $4
-         RETURNING user_id, username, email, phone_number, address, is_active, status`,
+         RETURNING user_id, username, email, phone_number, address, is_active, status, role`,
         [username, phone_number, address, userId]
     );
     return rows[0];
@@ -114,8 +122,33 @@ export const toggleUserLockRow = async (userId) => {
          SET is_active = NOT is_active,
              status = CASE WHEN is_active THEN 'LOCKED' ELSE 'ACTIVE' END
          WHERE user_id = $1
-         RETURNING user_id, username, email, is_active, status`,
+         RETURNING user_id, username, email, is_active, status, role`,
         [userId]
+    );
+    return rows[0];
+};
+
+// --- CÁC HÀM PHỤC VỤ QUÊN MẬT KHẨU ---
+export const savePasswordResetTokenRow = async (email, token, expiryDate) => {
+    const { rows } = await pgPool.query(
+        `UPDATE users SET reset_token = $1, reset_token_expires = $2 WHERE email = $3 RETURNING user_id, email, username`,
+        [token, expiryDate, email]
+    );
+    return rows[0];
+};
+
+export const fetchUserByResetTokenRow = async (token) => {
+    const { rows } = await pgPool.query(
+        `SELECT * FROM users WHERE reset_token = $1 AND reset_token_expires > NOW()`,
+        [token]
+    );
+    return rows[0];
+};
+
+export const updateUserPasswordRow = async (userId, newPasswordHash) => {
+    const { rows } = await pgPool.query(
+        `UPDATE users SET password = $1, reset_token = NULL, reset_token_expires = NULL WHERE user_id = $2 RETURNING user_id`,
+        [newPasswordHash, userId]
     );
     return rows[0];
 };

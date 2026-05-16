@@ -21,13 +21,34 @@ const TourDetail = React.lazy(() => import('./pages/client/TourDetail'));
 const Contact = React.lazy(() => import('./pages/client/Contact'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const Register = React.lazy(() => import('./pages/auth/Register'));
+const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
+
+// === THÊM COMPONENT BẢO VỆ NÀY ===
+const AdminRoute = ({ children }) => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+
+    // Nếu không có Token hoặc không phải Admin -> Đuổi về trang đăng nhập
+    if (!token || user?.role !== 'admin') {
+        return <Navigate to="/login" replace />;
+    }
+
+    // Nếu hợp lệ -> Cho phép đi vào giao diện Admin
+    return children;
+};
 
 const App = () => (
     <React.Suspense fallback={<div>Loading...</div>}>
         <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
         <Routes>
             <Route path="/" element={<Navigate to="/client" replace />} />
-            <Route path="/admin" element={<AdminLayout />}>
+            <Route path="/admin" element={
+                <AdminRoute>
+                    <AdminLayout />
+                </AdminRoute>
+            }>
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
                 <Route path="tours" element={<TourList />} />
@@ -39,6 +60,8 @@ const App = () => (
             </Route>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             <Route path="/client" element={<ClientLayout />}>
                 <Route index element={<ClientHome />} />
                 <Route path="about" element={<ClientAbout />} />
