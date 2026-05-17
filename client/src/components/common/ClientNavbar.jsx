@@ -7,6 +7,7 @@ const NAV_LINKS = [
     { label: 'Giới thiệu', to: '/client/about' },
     { label: 'Tour', to: '/client/tours' },
     { label: 'Điểm đến', to: '/client/destinations' },
+    { label: 'Tuyển dụng', to: '/client/careers' },
     { label: 'Liên hệ', to: '/client/contact' },
 ];
 
@@ -70,9 +71,6 @@ const ClientNavbar = () => {
                             {label}
                         </Link>
                     ))}
-                    <a href="#" className="text-[#8B1A1A] font-semibold hover:underline">
-                        Khuyến mãi
-                    </a>
                 </nav>
 
                 {/* Right Actions */}

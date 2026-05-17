@@ -62,7 +62,7 @@ const TourDetail = () => {
     );
 
     return (
-        <div className="bg-[#F9F6F4] min-h-screen pb-20 pt-[65px]">
+        <div className="bg-[#F9F6F4] min-h-screen pt-[65px]">
             <ClientNavbar />
 
             <TourDetailHeaderGallery tour={tour} />
@@ -72,7 +72,7 @@ const TourDetail = () => {
                 <div className="flex flex-col lg:flex-row gap-8 xl:gap-12">
 
                     {/* CỘT TRÁI (Nội dung): Chiếm không gian rộng hơn (72%) trên màn hình lớn */}
-                    <div className="lg:w-[68%] xl:w-[72%] space-y-12">
+                    <div className="lg:w-[68%] xl:w-[72%] space-y-12 text-base md:text-lg">
 
                         <div className="sticky top-[80px] z-20 bg-white/90 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-gray-100 flex gap-2 overflow-x-auto no-scrollbar">
                             <button onClick={() => scrollToSection('highlights')} className="px-6 py-3 text-base font-bold text-gray-600 hover:text-[#8B1A1A] transition-colors whitespace-nowrap">Điểm nhấn</button>

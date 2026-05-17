@@ -17,13 +17,13 @@ const TourDetailPolicies = ({ tour }) => {
         if (validItems.length === 0) return null;
 
         return (
-            <div className="mb-6 last:mb-0">
-                <h4 className={`font-bold mb-3 ${isRed ? 'text-[#8B1A1A]' : 'text-gray-900'}`}>{title}</h4>
-                <ul className="space-y-2">
+            <div className={`mb-6 last:mb-0 rounded-2xl border ${isRed ? 'border-[#F3D4D4] bg-[#FFF7F7]' : 'border-gray-100 bg-gray-50'} p-5`}>
+                <h4 className={`text-lg font-bold mb-3 ${isRed ? 'text-[#8B1A1A]' : 'text-gray-900'}`}>{title}</h4>
+                <ul className="space-y-3">
                     {validItems.map((item, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm text-gray-600 leading-relaxed">
-                            <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${isRed ? 'bg-[#8B1A1A]' : 'bg-gray-400'}`} />
-                            {item}
+                        <li key={index} className="flex items-start gap-2 text-base text-gray-700 leading-relaxed">
+                            <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${isRed ? 'bg-[#8B1A1A]' : 'bg-gray-400'}`} />
+                            <span>{item}</span>
                         </li>
                     ))}
                 </ul>
@@ -35,7 +35,7 @@ const TourDetailPolicies = ({ tour }) => {
         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
             <div className="flex items-center gap-2 mb-8 border-l-4 border-[#8B1A1A] pl-4">
                 <ShieldCheck className="w-6 h-6 text-[#8B1A1A]" />
-                <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Chính sách & Lưu ý</h3>
+                <h3 className="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight">Chính sách & Lưu ý</h3>
             </div>
 
             <div className="animate-fadeIn">

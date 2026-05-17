@@ -19,6 +19,7 @@ const ClientAbout = React.lazy(() => import('./pages/client/About'));
 const ClientTourList = React.lazy(() => import('./pages/client/ClientTourList'));
 const TourDetail = React.lazy(() => import('./pages/client/TourDetail'));
 const Contact = React.lazy(() => import('./pages/client/Contact'));
+const Careers = React.lazy(() => import('./pages/client/Careers'));
 const Login = React.lazy(() => import('./pages/auth/Login'));
 const Register = React.lazy(() => import('./pages/auth/Register'));
 const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
@@ -67,6 +68,7 @@ const App = () => (
                 <Route path="about" element={<ClientAbout />} />
                 <Route path="tours" element={<ClientTourList />} />
                 <Route path="tours/:id" element={<TourDetail />} />
+                <Route path="careers" element={<Careers />} />
                 <Route path="contact" element={<Contact />} />
                 {/* Thêm các route client khác tại đây */}
             </Route>
