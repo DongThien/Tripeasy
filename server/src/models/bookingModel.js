@@ -8,6 +8,22 @@ export const fetchTourPriceRow = async (tourId) => {
     return rows[0];
 };
 
+export const fetchDepartureByIdRow = async (departureId) => {
+    const { rows } = await pgPool.query(
+        "SELECT * FROM tour_departures WHERE departure_id = $1",
+        [departureId]
+    );
+    return rows[0];
+};
+
+export const updateDepartureStockRow = async (tourId, startDate, quantity) => {
+    const { rows } = await pgPool.query(
+        "UPDATE tour_departures SET stock = stock + $1 WHERE tour_id = $2 AND start_date = $3 RETURNING *",
+        [quantity, tourId, startDate]
+    );
+    return rows[0];
+};
+
 export const insertBookingRow = async ({
     tourId,
     userId,
@@ -15,11 +31,13 @@ export const insertBookingRow = async ({
     numAdults,
     numChildren,
     totalPrice,
-    specialRequests
+    specialRequests,
+    startDate,
+    paymentMethod
 }) => {
     const insertQuery = `
-        INSERT INTO bookings (tour_id, user_id, promotion_id, num_adults, num_children, total_price, payment_status, booking_status, special_requests)
-        VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 'PENDING', $7)
+        INSERT INTO bookings (tour_id, user_id, promotion_id, num_adults, num_children, total_price, payment_status, booking_status, special_requests, start_date, payment_method)
+        VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 'PENDING', $7, $8, $9)
         RETURNING *
     `;
     const { rows } = await pgPool.query(insertQuery, [
@@ -29,7 +47,9 @@ export const insertBookingRow = async ({
         numAdults,
         numChildren,
         totalPrice,
-        specialRequests
+        specialRequests,
+        startDate,
+        paymentMethod
     ]);
     return rows[0];
 };
@@ -39,7 +59,10 @@ export const fetchUserBookingsRows = async (userId) => {
         SELECT b.*, t.title, t.destination, t.price_adult, t.price_child, i.image_url AS image
         FROM bookings b
         JOIN tours t ON b.tour_id = t.tour_id
-        LEFT JOIN images i ON t.tour_id = i.tour_id
+        LEFT JOIN (
+            SELECT DISTINCT ON (tour_id) tour_id, image_url 
+            FROM images
+        ) i ON t.tour_id = i.tour_id
         WHERE b.user_id = $1
         ORDER BY b.booking_date DESC
     `;

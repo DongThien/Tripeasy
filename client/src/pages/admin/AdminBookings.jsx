@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import BookingTable from '../../components/admin/bookings/BookingTable';
 import AdminPagination from '../../components/admin/common/AdminPagination';
 import bookingService from '../../services/bookingService';
+import BookingDetailModal from '../../components/admin/bookings/BookingDetailModal';
 
 const EXPORT_BUTTONS = [
     { icon: <FileText size={15} />, label: 'PDF' },
@@ -24,6 +25,7 @@ const AdminBookings = () => {
     const [stats, setStats] = useState({ total: 0, pending: 0, monthly_revenue: 0 });
     const [isLoading, setIsLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [selectedBooking, setSelectedBooking] = useState(null);
     const [bookingStatusFilter, setBookingStatusFilter] = useState('all');
     const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
@@ -109,28 +111,44 @@ const AdminBookings = () => {
     };
 
     const handleConfirm = async (bk) => {
+        const confirmAction = window.confirm("Bạn có chắc chắn muốn xác nhận đã thanh toán cho đơn đặt tour này? Trạng thái sẽ chuyển sang Hoàn thành.");
+        if (!confirmAction) return;
+
         try {
             const res = await bookingService.updateBookingStatus(bk.booking_id, {
-                booking_status: 'CONFIRMED',
-                payment_status: bk.payment_status,
+                booking_status: 'COMPLETED',
+                payment_status: 'PAID',
             });
             if (res.success) {
                 setBookings((prev) =>
                     prev.map((b) =>
                         b.booking_id === bk.booking_id
-                            ? { ...b, status: 'Đã xác nhận', booking_status: 'CONFIRMED' }
+                            ? { 
+                                ...b, 
+                                status: 'Đã hoàn thành', 
+                                booking_status: 'COMPLETED',
+                                payment: 'Đã thanh toán',
+                                payment_status: 'PAID'
+                              }
                             : b
                     )
                 );
-                setStats((prev) => ({ ...prev, pending: Math.max(0, prev.pending - 1) }));
-                toast.success('Đã xác nhận đơn đặt chỗ');
+                setStats((prev) => ({ 
+                    ...prev, 
+                    pending: Math.max(0, prev.pending - 1),
+                    monthly_revenue: prev.monthly_revenue + bk.total_price 
+                }));
+                toast.success('Xác nhận đã thanh toán thành công!');
             }
         } catch {
-            toast.error('Không thể xác nhận đơn');
+            toast.error('Không thể xác nhận thanh toán');
         }
     };
 
     const handleCancel = async (bk) => {
+        const confirmCancel = window.confirm("Bạn có chắc chắn muốn HỦY đơn đặt tour này? Chỗ trống sẽ được hoàn trả lại hệ thống.");
+        if (!confirmCancel) return;
+
         try {
             const res = await bookingService.updateBookingStatus(bk.booking_id, {
                 booking_status: 'CANCELLED',
@@ -144,14 +162,17 @@ const AdminBookings = () => {
                             : b
                     )
                 );
-                toast.success('Đã hủy đơn đặt chỗ');
+                if (bk.booking_status === 'PENDING') {
+                    setStats((prev) => ({ ...prev, pending: Math.max(0, prev.pending - 1) }));
+                }
+                toast.success('Đã hủy đơn đặt chỗ thành công');
             }
         } catch {
             toast.error('Không thể hủy đơn');
         }
     };
 
-    const handleView = (bk) => console.log('Xem chi tiết booking:', bk);
+    const handleView = (bk) => setSelectedBooking(bk);
 
     const STAT_CARDS = [
         {
@@ -269,6 +290,18 @@ const AdminBookings = () => {
                 itemLabel="đơn"
                 className="mt-5"
             />
+
+            {selectedBooking && (
+                <BookingDetailModal
+                    booking={selectedBooking}
+                    onClose={() => setSelectedBooking(null)}
+                    onUpdateBooking={(updated) => {
+                        setBookings((prev) =>
+                            prev.map((b) => (b.booking_id === updated.booking_id ? updated : b))
+                        );
+                    }}
+                />
+            )}
         </div>
     );
 };

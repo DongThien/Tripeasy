@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const ContactMessageSection = ({ formData, onInputChange, onSubmit }) => (
+const ContactMessageSection = ({ formData, onInputChange, onSubmit, submitting }) => (
     <section className="mx-auto mt-8 max-w-7xl px-4 md:px-6 lg:px-8">
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100">
             <div className="grid lg:grid-cols-5">
@@ -96,9 +96,10 @@ const ContactMessageSection = ({ formData, onInputChange, onSubmit }) => (
 
                         <button
                             type="submit"
-                            className="w-full rounded-lg bg-[#8B1A1A] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#a32626]"
+                            disabled={submitting}
+                            className={`w-full rounded-lg bg-[#8B1A1A] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#a32626] ${submitting ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
-                            Gửi ngay
+                            {submitting ? 'Đang gửi...' : 'Gửi ngay'}
                         </button>
                     </form>
                 </div>

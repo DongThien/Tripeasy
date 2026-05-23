@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, ChevronDown, Info } from 'lucide-react';
 import { formatVND } from '../../../utils/formatHelper';
 
 const TourDetailBookingSidebar = ({ tour }) => {
+    const navigate = useNavigate();
     const [adults, setAdults] = useState(1);
     const [children, setChildren] = useState(0);
 
@@ -29,7 +31,14 @@ const TourDetailBookingSidebar = ({ tour }) => {
             alert("Vui lòng chọn ngày khởi hành!");
             return;
         }
-        console.log("Booking info:", { tourId: tour.tour_id, departure: selectedDeparture, adults, children, totalPrice });
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            navigate(`/login?redirect=/client/tours/${tour.tour_id}`);
+            return;
+        }
+
+        navigate(`/client/tours/${tour.tour_id}/checkout?adults=${adults}&children=${children}&departureId=${selectedDepId}`);
     };
 
     return (

@@ -80,6 +80,12 @@ const ClientNavbar = () => {
                     </button>
                     {user ? (
                         <div className="hidden md:flex items-center gap-3">
+                            <Link
+                                to="/client/my-bookings"
+                                className="text-sm font-bold text-gray-600 hover:text-[#8B1A1A] transition mr-2"
+                            >
+                                Lịch sử đặt tour
+                            </Link>
                             <div className="flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1">
                                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#8B1A1A] text-xs font-semibold text-white">
                                     {avatarLabel}
@@ -144,7 +150,13 @@ const ClientNavbar = () => {
                                 </span>
                                 <div>
                                     <div className="text-sm font-semibold text-gray-800">{displayName}</div>
-                                    <div className="text-xs text-gray-500">Tài khoản Tripeasy</div>
+                                    <Link 
+                                        to="/client/my-bookings" 
+                                        onClick={() => setMobileOpen(false)}
+                                        className="text-xs text-[#8B1A1A] font-bold hover:underline"
+                                    >
+                                        Xem lịch sử đặt tour
+                                    </Link>
                                 </div>
                             </div>
                             <button

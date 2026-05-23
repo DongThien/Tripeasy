@@ -12,6 +12,7 @@ const TourList = React.lazy(() => import('./pages/admin/TourList'));
 const AddTour = React.lazy(() => import('./pages/admin/AddTour'));
 const AdminBookings = React.lazy(() => import('./pages/admin/AdminBookings'));
 const AdminCustomers = React.lazy(() => import('./pages/admin/AdminCustomers'));
+const AdminContacts = React.lazy(() => import('./pages/admin/AdminContacts'));
 
 // Client Pages
 const ClientHome = React.lazy(() => import('./pages/client/Home'));
@@ -26,6 +27,8 @@ const Login = React.lazy(() => import('./pages/auth/Login'));
 const Register = React.lazy(() => import('./pages/auth/Register'));
 const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
+const Checkout = React.lazy(() => import('./pages/client/Checkout'));
+const MyBookings = React.lazy(() => import('./pages/client/MyBookings'));
 
 // === THÊM COMPONENT BẢO VỆ NÀY ===
 const AdminRoute = ({ children }) => {
@@ -59,7 +62,7 @@ const App = () => (
                 <Route path="bookings" element={<AdminBookings />} />
                 <Route path="customers" element={<AdminCustomers />} />
                 <Route path="settings" element={<div>Settings Page - Coming Soon</div>} />
-                <Route path="contact" element={<div>Contact Page - Coming Soon</div>} />
+                <Route path="contact" element={<AdminContacts />} />
             </Route>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -70,6 +73,8 @@ const App = () => (
                 <Route path="about" element={<ClientAbout />} />
                 <Route path="tours" element={<ClientTourList />} />
                 <Route path="tours/:id" element={<TourDetail />} />
+                <Route path="tours/:id/checkout" element={<Checkout />} />
+                <Route path="my-bookings" element={<MyBookings />} />
                 <Route path="news" element={<News />} />
                 <Route path="news/:slug" element={<NewsDetail />} />
                 <Route path="careers" element={<Careers />} />

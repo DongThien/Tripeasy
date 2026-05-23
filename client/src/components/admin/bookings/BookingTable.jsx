@@ -4,13 +4,14 @@ import { formatVND } from '../../../utils/formatHelper';
 
 // ── Badge helpers ──────────────────────────────────────────
 const STATUS_MAP = {
-    'Đã xác nhận': 'bg-green-100 text-green-700',
+    'Đã hoàn thành': 'bg-green-100 text-green-700',
+    'Đã xác nhận': 'bg-blue-100 text-blue-700',
     'Chờ xử lý': 'bg-orange-100 text-orange-600',
     'Đã hủy': 'bg-gray-100 text-gray-500',
 };
 
 const PAYMENT_MAP = {
-    'Đã thanh toán': 'bg-blue-100 text-blue-700',
+    'Đã thanh toán': 'bg-emerald-100 text-emerald-700',
     'Chưa thanh toán': 'bg-red-100 text-red-600',
 };
 

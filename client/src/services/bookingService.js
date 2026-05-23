@@ -12,5 +12,22 @@ export const getBookingById = (id) =>
 export const updateBookingStatus = (id, data) =>
     axiosClient.put(`/bookings/${id}/status`, data).then((r) => r.data);
 
-const bookingService = { getAllBookings, getBookingStats, getBookingById, updateBookingStatus };
+export const createBooking = (data) =>
+    axiosClient.post('/bookings', data).then((r) => r.data);
+
+export const getUserBookings = (userId) =>
+    axiosClient.get(`/bookings/user/${userId}`).then((r) => r.data);
+
+export const cancelUserBooking = (id) =>
+    axiosClient.put(`/bookings/${id}/cancel`).then((r) => r.data);
+
+const bookingService = { 
+    getAllBookings, 
+    getBookingStats, 
+    getBookingById, 
+    updateBookingStatus,
+    createBooking,
+    getUserBookings,
+    cancelUserBooking
+};
 export default bookingService;

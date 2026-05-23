@@ -5,7 +5,7 @@ const ContactInfoCards = () => (
     <section className="relative z-10 mx-auto -mt-16 max-w-7xl px-4 md:px-6 lg:px-8">
         <div className="grid gap-4 md:grid-cols-3">
             {[
-                { icon: MapPin, title: 'Địa chỉ', value: '123 Cầu Giấy, Hà Nội' },
+                { icon: MapPin, title: 'Địa chỉ', value: 'Số 3 đường Cầu Giấy, Hà Nội' },
                 { icon: Phone, title: 'Hotline', value: '1900 1234', sub: 'Hỗ trợ 24/7' },
                 { icon: Mail, title: 'Email', value: 'support@tripeasy.vn' },
             ].map((item) => {
