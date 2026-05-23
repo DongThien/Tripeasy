@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import tourService from "../../services/tourService";
 import TourStats from "../../components/admin/tours/TourStats";
 import TourFilters from "../../components/admin/tours/TourFilters";
 import TourTable from "../../components/admin/tours/TourTable";
-import TourPagination from "../../components/admin/tours/TourPagination";
+import AdminPagination from "../../components/admin/common/AdminPagination";
 
 const TourList = () => {
     const [tours, setTours] = useState([]);
@@ -17,30 +18,54 @@ const TourList = () => {
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [isImporting, setIsImporting] = useState(false);
+
+    const fetchTours = async () => {
+        setIsLoading(true);
+        try {
+            console.log("🚀 Fetching tours from API...");
+            const response = await tourService.getAllTours();
+            console.log("📊 Data from API:", response);
+
+            const finalArray = Array.isArray(response) ? response : [];
+            console.log("✅ Final tours array:", finalArray);
+            console.log("📈 Total tours found:", finalArray.length);
+
+            setTours(finalArray);
+        } catch (err) {
+            console.error("❌ Error fetching tours:", err);
+            setTours([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchTours = async () => {
-            setIsLoading(true);
-            try {
-                console.log("🚀 Fetching tours from API...");
-                const response = await tourService.getAllTours();
-                console.log("📊 Data from API:", response);
-
-                // Data đã được xử lý trong tourService - đảm bảo là array
-                const finalArray = Array.isArray(response) ? response : [];
-                console.log("✅ Final tours array:", finalArray);
-                console.log("📈 Total tours found:", finalArray.length);
-
-                setTours(finalArray);
-            } catch (err) {
-                console.error("❌ Error fetching tours:", err);
-                setTours([]);
-            } finally {
-                setIsLoading(false);
-            }
-        };
         fetchTours();
     }, []);
+
+    const handleImportExcel = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsImporting(true);
+        const toastId = toast.loading("Đang import tour...");
+
+        try {
+            const res = await tourService.importToursFromExcel(file);
+            if (res?.success) {
+                toast.success(`Đã import ${res.imported || 0} tour`, { id: toastId });
+                await fetchTours();
+            } else {
+                toast.error(res?.message || "Import thất bại", { id: toastId });
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || err.message || "Import thất bại", { id: toastId });
+        } finally {
+            setIsImporting(false);
+            e.target.value = "";
+        }
+    };
 
     // Computed values for stats
     const activeTours = tours.filter(t => t.availability === true).length;
@@ -106,12 +131,28 @@ const TourList = () => {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-[#8B1A1A]">Danh sách Tour</h1>
-                <Link
-                    to="/admin/tours/add"
-                    className="bg-[#8B1A1A] text-white px-5 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#a83232] transition"
-                >
-                    + Thêm Tour mới
-                </Link>
+                <div className="flex items-center gap-2">
+                    <label
+                        htmlFor="tour-import-input"
+                        className="bg-white text-[#8B1A1A] border border-[#8B1A1A] px-4 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-red-50 transition cursor-pointer"
+                    >
+                        {isImporting ? "Đang import..." : "Import Excel"}
+                    </label>
+                    <input
+                        id="tour-import-input"
+                        type="file"
+                        accept=".xlsx,.xls"
+                        onChange={handleImportExcel}
+                        className="hidden"
+                        disabled={isImporting}
+                    />
+                    <Link
+                        to="/admin/tours/add"
+                        className="bg-[#8B1A1A] text-white px-5 py-2 rounded-lg font-semibold flex items-center gap-2 hover:bg-[#a83232] transition"
+                    >
+                        + Thêm Tour mới
+                    </Link>
+                </div>
             </div>
 
             {/* Tour Stats */}
@@ -147,7 +188,7 @@ const TourList = () => {
             />
 
             {/* Tour Pagination */}
-            <TourPagination
+            <AdminPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
                 startIndex={startIndex}
@@ -155,6 +196,7 @@ const TourList = () => {
                 filteredLength={filteredTours.length}
                 onPageChange={handlePageChange}
                 getVisiblePages={getVisiblePages}
+                itemLabel="tour"
             />
         </div>
     );

@@ -12,18 +12,26 @@ const TourDetailPolicies = ({ tour }) => {
         return [];
     };
 
+    const highlightColonLabel = (text) => {
+        if (!text || typeof text !== 'string') return text;
+        return text.replace(
+            /(^|[.\n]\s*)([^:]{2,}?):/g,
+            (full, prefix, label) => `${prefix}<strong class='text-[#1E3A8A]'>${label.trim()}</strong>:`
+        );
+    };
+
     const PolicySection = ({ title, items, isRed = false }) => {
         const validItems = ensureArray(items);
         if (validItems.length === 0) return null;
 
         return (
             <div className={`mb-6 last:mb-0 rounded-2xl border ${isRed ? 'border-[#F3D4D4] bg-[#FFF7F7]' : 'border-gray-100 bg-gray-50'} p-5`}>
-                <h4 className={`text-lg font-bold mb-3 ${isRed ? 'text-[#8B1A1A]' : 'text-gray-900'}`}>{title}</h4>
+                <h4 className={`text-xl md:text-2xl font-bold mb-3 ${isRed ? 'text-[#8B1A1A]' : 'text-gray-900'}`}>{title}</h4>
                 <ul className="space-y-3">
                     {validItems.map((item, index) => (
-                        <li key={index} className="flex items-start gap-2 text-base text-gray-700 leading-relaxed">
+                        <li key={index} className="flex items-start gap-2 text-lg md:text-xl text-gray-700 leading-relaxed">
                             <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${isRed ? 'bg-[#8B1A1A]' : 'bg-gray-400'}`} />
-                            <span>{item}</span>
+                            <span dangerouslySetInnerHTML={{ __html: highlightColonLabel(item) }} />
                         </li>
                     ))}
                 </ul>

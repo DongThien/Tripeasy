@@ -1,5 +1,18 @@
 import React from 'react';
 
+const capitalizeSentences = (text) => {
+    if (!text || typeof text !== 'string') return text;
+    return text
+        .split(/([.!?]\s+)/)
+        .map((part, index) => {
+            if (index % 2 === 1) return part;
+            const trimmed = part.trimStart();
+            if (!trimmed) return part;
+            return part.replace(trimmed[0], trimmed[0].toUpperCase());
+        })
+        .join('');
+};
+
 const TourDetailHighlights = ({ highlights }) => (
     <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm">
         <h3 className="text-2xl md:text-3xl font-black text-gray-900 mb-8 uppercase tracking-tight border-l-4 border-[#8B1A1A] pl-4">
@@ -12,8 +25,10 @@ const TourDetailHighlights = ({ highlights }) => (
                         {index + 1}
                     </div>
                     <div>
-                        <h4 className="text-lg font-bold text-gray-900">{item.title}</h4>
-                        <p className="text-base text-gray-600 mt-2 leading-relaxed">{item.desc}</p>
+                        <h4 className="text-xl md:text-2xl font-bold text-gray-900">{item.title}</h4>
+                        <p className="text-lg md:text-xl text-gray-600 mt-2 leading-relaxed">
+                            {capitalizeSentences(item.desc)}
+                        </p>
                     </div>
                 </div>
             ))}

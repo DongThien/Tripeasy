@@ -11,12 +11,14 @@ import {
 const BOOKING_STATUS_VI = {
     PENDING: "Chờ xử lý",
     CONFIRMED: "Đã xác nhận",
+    COMFIRMED: "Đã xác nhận",
     CANCELLED: "Đã hủy"
 };
 
 const PAYMENT_STATUS_VI = {
     PENDING: "Chưa thanh toán",
-    PAID: "Đã thanh toán"
+    PAID: "Đã thanh toán",
+    COMPLETED: "Đã thanh toán"
 };
 
 const mapBooking = (row) => ({

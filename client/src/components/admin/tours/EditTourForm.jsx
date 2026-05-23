@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Save, ToggleLeft, ToggleRight, CheckCircle2 } from 'lucide-react';
 import axiosClient from '../../../services/axiosClient';
 import toast from 'react-hot-toast';
+import { compressImages } from '../../../utils/imageCompressor';
+import { uploadTourImagesBackground } from '../../../services/imageUploadService';
 
 // Tái sử dụng 100% Component từ AddTour
 import TourBasicInfoSection from '../addTour/TourBasicInfoSection';
@@ -10,6 +12,7 @@ import TourPricingSection from '../addTour/TourPricingSection';
 import TourExtrasSection from '../addTour/TourExtrasSection';
 import TourPoliciesSection from '../addTour/TourPoliciesSection';
 import TourItinerarySection from '../addTour/TourItinerarySection';
+import TourImageUploadSection from '../addTour/TourImageUploadSection';
 
 const EditTourForm = ({ tourData, onClose, onSaved }) => {
     // 1. Khai báo Form State
@@ -29,10 +32,15 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
     const [policyOther, setPolicyOther] = useState([]);
     const [itinerary, setItinerary] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [images, setImages] = useState([]);
+    const [imagePreviews, setImagePreviews] = useState([]);
+    const [existingImages, setExistingImages] = useState([]);
+    const [isCompressing, setIsCompressing] = useState(false);
 
     // 2. Đổ dữ liệu từ bảng (tourData) vào Form khi mở Modal
     useEffect(() => {
         if (!tourData) return;
+        let isActive = true;
 
         const parseJSON = (data, defaultVal) => {
             if (!data) return defaultVal;
@@ -40,37 +48,61 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
             catch { return defaultVal; }
         };
 
-        // ĐÃ FIX: Hàm gọt bỏ phần thập phân (.00) từ Database gửi lên
         const removeDecimals = (val) => {
             if (val === null || val === undefined || val === '') return '';
             return Number(val).toString();
         };
 
-        setFormData({
-            title: tourData.title || '',
-            destination: tourData.destination || '',
-            duration: tourData.duration || '',
-            region: tourData.region || '',
-            max_guests: tourData.quantity || '',
-            // Áp dụng hàm removeDecimals để xóa .00 cho các trường giá
-            price_adult: removeDecimals(tourData.price_adult),
-            price_child: removeDecimals(tourData.price_child),
-            old_price: removeDecimals(tourData.old_price),
-            start_location: tourData.start_location || '',
-            transport: tourData.transport || '',
-            category: tourData.category || ''
-        });
+        const hydrateFromTour = (source) => {
+            setFormData({
+                title: source.title || '',
+                destination: source.destination || '',
+                duration: source.duration || '',
+                region: source.region || '',
+                max_guests: source.quantity || '',
+                price_adult: removeDecimals(source.price_adult),
+                price_child: removeDecimals(source.price_child),
+                old_price: removeDecimals(source.old_price),
+                start_location: source.start_location || '',
+                transport: source.transport || '',
+                category: source.category || ''
+            });
 
-        setAvailability(tourData.availability ?? true);
+            setAvailability(source.availability ?? true);
+            setDepartures(parseJSON(source.departures, [{ start_date: '', end_date: '', stock: '' }]));
+            setHighlights(parseJSON(source.highlights, [{ title: '', desc: '' }]));
+            setIncluded(parseJSON(source.included, ['']));
+            setExcluded(parseJSON(source.excluded, ['']));
+            setPolicyChild(parseJSON(source.policy_child, ['']));
+            setPolicyCancel(parseJSON(source.policy_cancel, ['']));
+            setPolicyOther(parseJSON(source.policy_other, ['']));
+            setItinerary(parseJSON(source.itinerary, [{ day: 1, title: '', content: '' }]));
 
-        setDepartures(parseJSON(tourData.departures, [{ start_date: '', end_date: '', stock: '' }]));
-        setHighlights(parseJSON(tourData.highlights, [{ title: '', desc: '' }]));
-        setIncluded(parseJSON(tourData.included, ['']));
-        setExcluded(parseJSON(tourData.excluded, ['']));
-        setPolicyChild(parseJSON(tourData.policy_child, ['']));
-        setPolicyCancel(parseJSON(tourData.policy_cancel, ['']));
-        setPolicyOther(parseJSON(tourData.policy_other, ['']));
-        setItinerary(parseJSON(tourData.itinerary, [{ day: 1, title: '', content: '' }]));
+            const incomingImages = Array.isArray(source.images)
+                ? source.images
+                : (source.image_url ? [source.image_url] : []);
+            setExistingImages(incomingImages.filter(Boolean));
+            setImages([]);
+            setImagePreviews([]);
+        };
+
+        const loadDetails = async () => {
+            hydrateFromTour(tourData);
+            try {
+                const res = await axiosClient.get(`/tours/${tourData.tour_id}/images`);
+                if (isActive && res.data?.success) {
+                    setExistingImages((res.data.data || []).filter(Boolean));
+                }
+            } catch {
+                // Fallback to data already in tourData
+            }
+        };
+
+        loadDetails();
+
+        return () => {
+            isActive = false;
+        };
     }, [tourData]);
 
     // Khóa cuộn trang nền khi mở Modal
@@ -94,6 +126,65 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
     const addItineraryDay = () => setItinerary(prev => [...prev, { day: prev.length + 1, title: '', content: '' }]);
     const removeItineraryDay = (index) => { if (itinerary.length > 1) setItinerary(prev => prev.filter((_, i) => i !== index)); };
     const updateItinerary = (index, field, value) => setItinerary(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+
+    const handleImageUpload = async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+        setIsCompressing(true);
+        try {
+            const compressedFiles = await compressImages(files);
+            const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
+            setImages(prev => [...prev, ...compressedFiles]);
+            setImagePreviews(prev => [...prev, ...newPreviews]);
+            toast.success(`✅ ${compressedFiles.length} ảnh đã sẵn sàng (đã nén)`);
+        } catch (error) {
+            toast.error('❌ Lỗi nén ảnh: ' + error.message);
+        } finally {
+            setIsCompressing(false);
+        }
+    };
+
+    const handleDrop = async (e) => {
+        e.preventDefault();
+        const files = Array.from(e.dataTransfer.files || []).filter(file => file.type.startsWith('image/'));
+        if (files.length === 0) return;
+        setIsCompressing(true);
+        try {
+            const compressedFiles = await compressImages(files);
+            const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
+            setImages(prev => [...prev, ...compressedFiles]);
+            setImagePreviews(prev => [...prev, ...newPreviews]);
+            toast.success(`✅ ${compressedFiles.length} ảnh đã sẵn sàng (đã nén)`);
+        } catch (error) {
+            toast.error('❌ Lỗi nén ảnh: ' + error.message);
+        } finally {
+            setIsCompressing(false);
+        }
+    };
+
+    const removeImage = (index) => {
+        setImages(prev => prev.filter((_, i) => i !== index));
+        setImagePreviews(prev => prev.filter((_, i) => i !== index));
+        if (imagePreviews[index]) {
+            URL.revokeObjectURL(imagePreviews[index]);
+        }
+    };
+
+    const handleRemoveExistingImage = async (imageUrl) => {
+        try {
+            const res = await axiosClient.delete(`/tours/${tourData.tour_id}/images`, {
+                data: { image_url: imageUrl }
+            });
+            if (res.data?.success) {
+                setExistingImages((prev) => prev.filter((img) => img !== imageUrl));
+                toast.success('✅ Đã xóa ảnh');
+            } else {
+                toast.error('❌ Không thể xóa ảnh');
+            }
+        } catch (err) {
+            toast.error('❌ Lỗi xóa ảnh: ' + (err.response?.data?.message || err.message));
+        }
+    };
 
     // 4. Xử lý Cập nhật (Submit)
     const handleSubmit = async () => {
@@ -135,6 +226,9 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
 
             if (res.data.success) {
                 toast.success('✅ Cập nhật tour thành công!', { id: toastId });
+                if (images.length > 0) {
+                    uploadTourImagesBackground(tourData.tour_id, [...images]);
+                }
                 onSaved?.(res.data.data);
             } else {
                 toast.error('❌ Lỗi: ' + res.data.message, { id: toastId });
@@ -174,6 +268,50 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
                     <TourExtrasSection highlights={highlights} setHighlights={setHighlights} included={included} setIncluded={setIncluded} excluded={excluded} setExcluded={setExcluded} />
 
                     <TourPoliciesSection policyChild={policyChild} setPolicyChild={setPolicyChild} policyCancel={policyCancel} setPolicyCancel={setPolicyCancel} policyOther={policyOther} setPolicyOther={setPolicyOther} />
+
+                    {existingImages.length > 0 && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-red-50 rounded-lg">
+                                    <CheckCircle2 className="w-5 h-5 text-[#8B1A1A]" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900">Ảnh hiện tại</h3>
+                            </div>
+                            <div className="flex flex-wrap gap-4">
+                                {existingImages.map((img, index) => (
+                                    <div
+                                        key={`${img}-${index}`}
+                                        className="relative"
+                                        style={{ width: '120px', height: '120px', flex: '0 0 auto' }}
+                                    >
+                                        <img
+                                            src={img}
+                                            alt={`Current ${index + 1}`}
+                                            className="w-full h-full object-cover rounded-lg border border-gray-200 shadow-sm"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveExistingImage(img)}
+                                            className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg z-20 cursor-pointer transition-colors"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <TourImageUploadSection
+                        images={images}
+                        setImages={setImages}
+                        imagePreviews={imagePreviews}
+                        setImagePreviews={setImagePreviews}
+                        handleImageUpload={handleImageUpload}
+                        handleDrop={handleDrop}
+                        removeImage={removeImage}
+                        isCompressing={isCompressing}
+                    />
 
                     <TourItinerarySection itinerary={itinerary} addItineraryDay={addItineraryDay} removeItineraryDay={removeItineraryDay} updateItinerary={updateItinerary} />
 

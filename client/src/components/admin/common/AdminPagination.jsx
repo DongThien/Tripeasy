@@ -1,24 +1,25 @@
 import React from 'react';
 
-const TourPagination = ({
+const AdminPagination = ({
     currentPage,
     totalPages,
     startIndex,
     endIndex,
     filteredLength,
     onPageChange,
-    getVisiblePages
+    getVisiblePages,
+    itemLabel = 'tour',
+    className = '',
 }) => {
     if (totalPages <= 1) return null;
 
     return (
-        <div className="flex items-center justify-between px-4 py-3 text-sm text-gray-500 border-t">
+        <div className={`flex items-center justify-between px-4 py-3 text-sm text-gray-500 border-t ${className}`}>
             <div>
-                Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredLength)} trong số {filteredLength} tour
+                Hiển thị {startIndex + 1}-{Math.min(endIndex, filteredLength)} trong số {filteredLength} {itemLabel}
             </div>
 
             <div className="flex items-center gap-1">
-                {/* Previous button */}
                 <button
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 1}
@@ -30,8 +31,7 @@ const TourPagination = ({
                     Trước
                 </button>
 
-                {/* Page numbers */}
-                {getVisiblePages().map((page, index) => (
+                {getVisiblePages().map((page, index) =>
                     page === '...' ? (
                         <span key={`dots-${index}`} className="px-2 py-1">...</span>
                     ) : (
@@ -46,9 +46,8 @@ const TourPagination = ({
                             {page}
                         </button>
                     )
-                ))}
+                )}
 
-                {/* Next button */}
                 <button
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
@@ -64,4 +63,4 @@ const TourPagination = ({
     );
 };
 
-export default TourPagination;
+export default AdminPagination;

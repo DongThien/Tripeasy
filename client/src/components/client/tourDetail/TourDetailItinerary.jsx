@@ -36,7 +36,7 @@ const TourDetailItinerary = ({ itinerary }) => {
                     isMainPoint = true;
                     htmlStr = htmlStr.replace(
                         timeRegex,
-                        "<strong class='text-[#004b87] uppercase mr-1'>$&</strong>"
+                        "<strong class='text-[#1E3A8A] uppercase mr-1'>$&</strong>"
                     );
                 }
 
@@ -49,37 +49,49 @@ const TourDetailItinerary = ({ itinerary }) => {
                 // 3. Highlight địa danh trong ngoặc kép " " hoặc “ ” -> Xanh đậm
                 htmlStr = htmlStr.replace(
                     /(["“])([^"”]+)(["”])/g,
-                    "<strong class='text-[#004b87]'>$1$2$3</strong>"
+                    "<strong class='text-[#1E3A8A]'>$1$2$3</strong>"
                 );
 
-                // 4. Highlight nội dung trong ngoặc đơn ( ) -> Đỏ mận, in nghiêng
+                // 4. Tạm ẩn nội dung trong ngoặc để tránh ảnh hưởng highlight dấu :
+                const parenMatches = [];
+                htmlStr = htmlStr.replace(/\([^)]*\)/g, (match) => {
+                    const token = `__PAREN_${parenMatches.length}__`;
+                    parenMatches.push(match);
+                    return token;
+                });
+
+                // 5. In đậm + xanh đậm phần chữ trước dấu : (không ảnh hưởng phần trong ngoặc)
                 htmlStr = htmlStr.replace(
-                    /\(([^)]+)\)/g,
-                    "<span class='text-[#8B1A1A] font-medium italic'>($1)</span>"
+                    /(^|[.\n]\s*)([^:]{2,}?):/g,
+                    (full, prefix, label) => `${prefix}<strong class='text-[#1E3A8A]'>${label.trim()}</strong>:`
                 );
+
+                // 6. Khôi phục nội dung trong ngoặc đơn ( ) -> Đỏ mận, in nghiêng
+                htmlStr = htmlStr.replace(/__PAREN_(\d+)__/g, (token, index) => {
+                    const text = parenMatches[Number(index)] || '';
+                    return `<span class='text-[#b91c1c] font-semibold italic'>${text}</span>`;
+                });
 
                 // KẾT QUẢ RENDER: Dòng chính thì lùi vào & có dấu chấm. Dòng phụ thì sát lề.
                 if (isMainPoint) {
                     return (
-                        <div key={idx} className="relative pl-6 mb-3.5 text-gray-800 text-[16px] md:text-[17px] leading-relaxed text-justify">
-                            {/* Căn chỉnh dấu chấm cho khớp với dòng chữ to hơn */}
-                            <span className="absolute left-0 top-[11px] h-1.5 w-1.5 rounded-full bg-[#8B1A1A]"></span>
-                            <span dangerouslySetInnerHTML={{ __html: htmlStr }} />
-                        </div>
-                    );
-                } else {
-                    return (
-                        <div key={idx} className="mb-3.5 text-gray-800 text-[16px] md:text-[17px] leading-relaxed text-justify">
+                        <div key={idx} className="pl-4 md:pl-5 mb-3.5 text-gray-800 text-[18px] md:text-[19px] leading-relaxed text-justify">
                             <span dangerouslySetInnerHTML={{ __html: htmlStr }} />
                         </div>
                     );
                 }
+
+                return (
+                    <div key={idx} className="mb-3.5 text-gray-800 text-[18px] md:text-[19px] leading-relaxed text-justify">
+                        <span dangerouslySetInnerHTML={{ __html: htmlStr }} />
+                    </div>
+                );
             });
     };
 
     return (
         <div className="mt-12" id="itinerary">
-            <h2 className="text-2xl font-extrabold text-[#111827] mb-8 uppercase tracking-wide">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-[#111827] mb-8 uppercase tracking-wide">
                 Chương trình tour
             </h2>
 
@@ -99,8 +111,8 @@ const TourDetailItinerary = ({ itinerary }) => {
                             <div
                                 onClick={() => toggleDay(index)}
                                 className={`cursor-pointer overflow-hidden rounded-2xl border transition-all duration-300 ${isExpanded
-                                        ? 'border-[#8B1A1A]/30 bg-white shadow-md ring-1 ring-[#8B1A1A]/10'
-                                        : 'border-gray-100 bg-gray-50/80 hover:bg-white hover:shadow-sm'
+                                    ? 'border-[#8B1A1A]/30 bg-white shadow-md ring-1 ring-[#8B1A1A]/10'
+                                    : 'border-gray-100 bg-gray-50/80 hover:bg-white hover:shadow-sm'
                                     }`}
                             >
                                 <div className="flex flex-wrap items-center justify-between p-5 md:px-7 gap-4">
@@ -133,7 +145,7 @@ const TourDetailItinerary = ({ itinerary }) => {
                                     <div className="overflow-hidden">
                                         <div className="p-5 md:p-7 md:pt-2 border-t border-gray-100 bg-white">
                                             {/* Xóa thẻ <ul> đi vì chúng ta chuyển sang dùng <div> riêng lẻ cho từng đoạn */}
-                                            <div className="space-y-1">
+                                            <div className="space-y-2">
                                                 {formatActivities(day.activities || day.content || day.description)}
                                             </div>
                                         </div>

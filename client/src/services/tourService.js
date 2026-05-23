@@ -101,6 +101,21 @@ const tourService = {
             console.error('Error deleting tour:', error);
             throw error;
         }
+    },
+
+    // Import tours from Excel
+    importToursFromExcel: async (file) => {
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            const response = await axiosClient.post('/tours/import', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error importing tours:', error);
+            throw error;
+        }
     }
 };
 

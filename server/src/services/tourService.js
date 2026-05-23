@@ -6,7 +6,9 @@ import {
     updateTourRow,
     deleteTourRow,
     fetchTourIdRow,
+    fetchTourImagesRows,
     insertTourImageRow,
+    deleteTourImageRow,
     insertTourDeparturesRow,
     deleteTourDeparturesRow
 } from "../models/tourModel.js";
@@ -99,6 +101,18 @@ export const getTourByIdData = async (tourId) => {
     return row;
 };
 
+export const getTourImagesData = async (tourId) => {
+    const tourRow = await fetchTourIdRow(tourId);
+    if (!tourRow) {
+        const error = new Error("Tour không tồn tại");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    const rows = await fetchTourImagesRows(tourId);
+    return rows.map((row) => row.image_url).filter(Boolean);
+};
+
 export const updateTourData = async (tourId, payload) => {
     const client = await pgPool.connect();
     try {
@@ -179,6 +193,23 @@ export const uploadTourImagesData = async (tourId, files) => {
     await Promise.all(imageInsertPromises);
 
     return { tour_id: tourId, images_count: files.length };
+};
+
+export const deleteTourImageData = async (tourId, imageUrl) => {
+    if (!imageUrl) {
+        const error = new Error("Thiếu đường dẫn ảnh để xóa");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    const deletedRow = await deleteTourImageRow(tourId, imageUrl);
+    if (!deletedRow) {
+        const error = new Error("Ảnh không tồn tại");
+        error.statusCode = 404;
+        throw error;
+    }
+
+    return deletedRow;
 };
 
 export const getTourReviewsData = async (tourId) => {

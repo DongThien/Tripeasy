@@ -33,8 +33,8 @@ const ClientFooter = () => (
                 <ul className="space-y-2 text-gray-400">
                     <li><Link to="/client/about" className="hover:text-white transition-colors">Giới thiệu</Link></li>
                     <li><a href="#" className="hover:text-white transition-colors">Đội ngũ</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">Tuyển dụng</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">Tin tức</a></li>
+                    <li><Link to="/client/careers" className="hover:text-white transition-colors">Tuyển dụng</Link></li>
+                    <li><Link to="/client/news" className="hover:text-white transition-colors">Tin tức</Link></li>
                 </ul>
             </div>
 

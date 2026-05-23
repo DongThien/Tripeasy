@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, CheckCircle } from 'lucide-react';
+import { Eye, CheckCircle, XCircle } from 'lucide-react';
 import { formatVND } from '../../../utils/formatHelper';
 
 // ── Badge helpers ──────────────────────────────────────────
@@ -87,7 +87,7 @@ const MOCK_BOOKINGS = [
 ];
 
 // ── Component ──────────────────────────────────────────────
-const BookingTable = ({ bookings = [], isLoading = false, onView, onConfirm }) => {
+const BookingTable = ({ bookings = [], isLoading = false, onView, onConfirm, onCancel }) => {
     if (isLoading) {
         return (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-10 text-center text-gray-400">
@@ -166,6 +166,13 @@ const BookingTable = ({ bookings = [], isLoading = false, onView, onConfirm }) =
                                                 className="w-4 h-4 text-green-500 cursor-pointer hover:scale-110 transition"
                                                 title="Xác nhận đặt chỗ"
                                                 onClick={() => onConfirm?.(bk)}
+                                            />
+                                        )}
+                                        {bk.status !== 'Đã hủy' && (
+                                            <XCircle
+                                                className="w-4 h-4 text-red-500 cursor-pointer hover:scale-110 transition"
+                                                title="Hủy đặt chỗ"
+                                                onClick={() => onCancel?.(bk)}
                                             />
                                         )}
                                         <Eye

@@ -6,7 +6,7 @@ const NAV_LINKS = [
     { label: 'Trang chủ', to: '/client' },
     { label: 'Giới thiệu', to: '/client/about' },
     { label: 'Tour', to: '/client/tours' },
-    { label: 'Điểm đến', to: '/client/destinations' },
+    { label: 'Tin tức', to: '/client/news' },
     { label: 'Tuyển dụng', to: '/client/careers' },
     { label: 'Liên hệ', to: '/client/contact' },
 ];

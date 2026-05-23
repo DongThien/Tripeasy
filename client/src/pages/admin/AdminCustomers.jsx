@@ -3,6 +3,7 @@ import { Search, SlidersHorizontal, UserPlus, Users, UserCheck, RefreshCcw } fro
 import toast from 'react-hot-toast';
 import CustomerTable from '../../components/admin/customers/CustomerTable';
 import userService from '../../services/userService';
+import AdminPagination from '../../components/admin/common/AdminPagination';
 
 
 
@@ -20,6 +21,8 @@ const AdminCustomers = () => {
     const [search, setSearch] = useState('');
     const [tierFilter, setTierFilter] = useState('Tất cả');
     const [statusFilter, setStatusFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -52,6 +55,51 @@ const AdminCustomers = () => {
             return matchSearch && matchTier && matchStatus;
         });
     }, [customers, search, tierFilter, statusFilter]);
+
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentCustomers = filtered.slice(startIndex, endIndex);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, tierFilter, statusFilter]);
+
+    const handlePageChange = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    const getVisiblePages = () => {
+        const delta = 2;
+        const range = [];
+        const rangeWithDots = [];
+
+        for (
+            let i = Math.max(2, currentPage - delta);
+            i <= Math.min(totalPages - 1, currentPage + delta);
+            i++
+        ) {
+            range.push(i);
+        }
+
+        if (currentPage - delta > 2) {
+            rangeWithDots.push(1, '...');
+        } else {
+            rangeWithDots.push(1);
+        }
+
+        rangeWithDots.push(...range);
+
+        if (currentPage + delta < totalPages - 1) {
+            rangeWithDots.push('...', totalPages);
+        } else {
+            rangeWithDots.push(totalPages);
+        }
+
+        return rangeWithDots.filter((v, i, a) => a.indexOf(v) === i && totalPages > 1);
+    };
 
     const handleToggleLock = async (target) => {
         try {
@@ -175,28 +223,23 @@ const AdminCustomers = () => {
             {/* Table Card */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <CustomerTable
-                    customers={filtered}
+                    customers={currentCustomers}
                     onView={handleView}
                     onEdit={handleEdit}
                     onToggleLock={handleToggleLock}
                 />
 
                 {/* Footer */}
-                <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100 text-sm text-gray-500">
-                    <span>
-                        Hiển thị <span className="font-semibold text-gray-700">1–{filtered.length}</span> trong số{' '}
-                        <span className="font-semibold text-gray-700">12,842</span> khách hàng
-                    </span>
-                    <div className="flex items-center gap-1">
-                        <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-50">‹</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded border text-white font-semibold text-sm" style={{ background: '#8B1A1A', borderColor: '#8B1A1A' }}>1</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50">2</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50">3</button>
-                        <span className="px-1 text-gray-400">...</span>
-                        <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 text-gray-600 hover:bg-gray-50">256</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded border border-gray-200 text-gray-400 hover:bg-gray-50">›</button>
-                    </div>
-                </div>
+                <AdminPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    startIndex={startIndex}
+                    endIndex={endIndex}
+                    filteredLength={filtered.length}
+                    onPageChange={handlePageChange}
+                    getVisiblePages={getVisiblePages}
+                    itemLabel="khách hàng"
+                />
             </div>
         </div>
     );

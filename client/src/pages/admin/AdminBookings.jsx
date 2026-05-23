@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FileText, Table2, Sheet, Printer, CalendarCheck, Clock, TrendingUp, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BookingTable from '../../components/admin/bookings/BookingTable';
+import AdminPagination from '../../components/admin/common/AdminPagination';
 import bookingService from '../../services/bookingService';
 
 const EXPORT_BUTTONS = [
@@ -25,6 +26,8 @@ const AdminBookings = () => {
     const [search, setSearch] = useState('');
     const [bookingStatusFilter, setBookingStatusFilter] = useState('all');
     const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const pageSize = 10;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -58,6 +61,53 @@ const AdminBookings = () => {
         });
     }, [bookings, search, bookingStatusFilter, paymentStatusFilter]);
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, bookingStatusFilter, paymentStatusFilter]);
+
+    const totalPages = Math.ceil(filtered.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const pagedBookings = useMemo(() => {
+        return filtered.slice(startIndex, endIndex);
+    }, [filtered, startIndex, endIndex]);
+
+    const handlePageChange = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    const getVisiblePages = () => {
+        const delta = 2;
+        const range = [];
+        const rangeWithDots = [];
+
+        for (
+            let i = Math.max(2, currentPage - delta);
+            i <= Math.min(totalPages - 1, currentPage + delta);
+            i++
+        ) {
+            range.push(i);
+        }
+
+        if (currentPage - delta > 2) {
+            rangeWithDots.push(1, '...');
+        } else {
+            rangeWithDots.push(1);
+        }
+
+        rangeWithDots.push(...range);
+
+        if (currentPage + delta < totalPages - 1) {
+            rangeWithDots.push('...', totalPages);
+        } else {
+            rangeWithDots.push(totalPages);
+        }
+
+        return rangeWithDots.filter((v, i, a) => a.indexOf(v) === i && totalPages > 1);
+    };
+
     const handleConfirm = async (bk) => {
         try {
             const res = await bookingService.updateBookingStatus(bk.booking_id, {
@@ -77,6 +127,27 @@ const AdminBookings = () => {
             }
         } catch {
             toast.error('Không thể xác nhận đơn');
+        }
+    };
+
+    const handleCancel = async (bk) => {
+        try {
+            const res = await bookingService.updateBookingStatus(bk.booking_id, {
+                booking_status: 'CANCELLED',
+                payment_status: bk.payment_status,
+            });
+            if (res.success) {
+                setBookings((prev) =>
+                    prev.map((b) =>
+                        b.booking_id === bk.booking_id
+                            ? { ...b, status: 'Đã hủy', booking_status: 'CANCELLED' }
+                            : b
+                    )
+                );
+                toast.success('Đã hủy đơn đặt chỗ');
+            }
+        } catch {
+            toast.error('Không thể hủy đơn');
         }
     };
 
@@ -180,10 +251,23 @@ const AdminBookings = () => {
             </div>
 
             <BookingTable
-                bookings={filtered}
+                bookings={pagedBookings}
                 isLoading={isLoading}
                 onView={handleView}
                 onConfirm={handleConfirm}
+                onCancel={handleCancel}
+            />
+
+            <AdminPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                filteredLength={filtered.length}
+                onPageChange={handlePageChange}
+                getVisiblePages={getVisiblePages}
+                itemLabel="đơn"
+                className="mt-5"
             />
         </div>
     );

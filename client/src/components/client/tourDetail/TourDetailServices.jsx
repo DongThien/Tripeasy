@@ -9,7 +9,7 @@ const TourDetailServices = ({ included, excluded }) => (
             </h4>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {included.map((item, i) => (
-                    <li key={i} className="flex gap-3 text-base text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <li key={i} className="flex gap-3 text-lg md:text-xl text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-100">
                         <span className="mt-1 h-2.5 w-2.5 rounded-full bg-green-600/70 flex-shrink-0" />
                         <span className="leading-relaxed">{item}</span>
                     </li>
@@ -22,7 +22,7 @@ const TourDetailServices = ({ included, excluded }) => (
             </h4>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {excluded.map((item, i) => (
-                    <li key={i} className="flex gap-3 text-base text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                    <li key={i} className="flex gap-3 text-lg md:text-xl text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-100">
                         <span className="mt-1 h-2.5 w-2.5 rounded-full bg-[#8B1A1A]/70 flex-shrink-0" />
                         <span className="leading-relaxed">{item}</span>
                     </li>

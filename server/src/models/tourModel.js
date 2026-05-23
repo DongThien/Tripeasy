@@ -121,12 +121,26 @@ export const fetchTourIdRow = async (tourId) => {
     return rows[0];
 };
 
+export const fetchTourImagesRows = async (tourId) => {
+    const { rows } = await pgPool.query(
+        "SELECT image_url FROM images WHERE tour_id = $1 ORDER BY upload_date ASC",
+        [tourId]
+    );
+    return rows;
+};
+
 export const insertTourImageRow = async (tourId, imageUrl) => {
     const insertImageQuery = `
         INSERT INTO images (tour_id, image_url, upload_date) 
         VALUES ($1, $2, NOW())
     `;
     await pgPool.query(insertImageQuery, [tourId, imageUrl]);
+};
+
+export const deleteTourImageRow = async (tourId, imageUrl) => {
+    const deleteQuery = "DELETE FROM images WHERE tour_id = $1 AND image_url = $2 RETURNING *";
+    const { rows } = await pgPool.query(deleteQuery, [tourId, imageUrl]);
+    return rows[0];
 };
 
 export const deleteTourDeparturesRow = async (client, tourId) => {
