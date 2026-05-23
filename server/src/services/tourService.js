@@ -166,6 +166,17 @@ export const updateTourData = async (tourId, payload) => {
 };
 
 export const deleteTourData = async (tourId) => {
+    const { rows } = await pgPool.query(
+        "SELECT COUNT(*)::int AS booking_count FROM bookings WHERE tour_id = $1",
+        [tourId]
+    );
+    const bookingCount = rows[0]?.booking_count || 0;
+    if (bookingCount > 0) {
+        const error = new Error("Tour đã phát sinh booking, không thể xóa");
+        error.statusCode = 409;
+        throw error;
+    }
+
     const row = await deleteTourRow(tourId);
     if (!row) {
         const error = new Error("Tour not found");

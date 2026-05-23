@@ -5,7 +5,7 @@ import ClientFooter from "../../components/common/ClientFooter";
 import HeroSection from "../../components/client/home/HeroSection";
 import WhyChoose from "../../components/client/home/WhyChoose";
 import FeaturedTours from "../../components/client/home/FeaturedTours";
-import PromoBanner from "../../components/client/home/PromoBanner";
+import DestinationHighlights from "../../components/client/home/DestinationHighlights";
 
 const Home = () => (
     <div className="bg-[#FDFBF7] min-h-screen">
@@ -14,7 +14,7 @@ const Home = () => (
             <HeroSection />
             <WhyChoose />
             <FeaturedTours />
-            <PromoBanner />
+            <DestinationHighlights />
         </main>
         <ClientFooter />
     </div>

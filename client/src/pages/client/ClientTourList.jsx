@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { useSearchParams } from 'react-router-dom';
 import ClientNavbar from '../../components/common/ClientNavbar';
 import ClientFooter from '../../components/common/ClientFooter';
 import TourListHero from '../../components/client/tours/TourListHero';
@@ -11,6 +12,7 @@ import tourService from '../../services/tourService';
 import TourListSkeleton from '../../components/client/tours/TourListSkeleton';
 
 const ClientTourList = () => {
+    const [searchParams] = useSearchParams();
     // State Management
     const [tours, setTours] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -24,6 +26,25 @@ const ClientTourList = () => {
     const [selectedType, setSelectedType] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedSort, setSelectedSort] = useState('Phổ biến nhất');
+
+    useEffect(() => {
+        const q = searchParams.get('q') || '';
+        const budget = searchParams.get('budget') || 'all';
+
+        if (q) {
+            setSearchQuery(q);
+        }
+
+        if (budget === 'under-2') {
+            setPriceRange([0, 2000000]);
+        } else if (budget === '2-5') {
+            setPriceRange([2000000, 5000000]);
+        } else if (budget === 'over-5') {
+            setPriceRange([5000000, 10000000]);
+        } else if (budget === 'all') {
+            setPriceRange([0, 10000000]);
+        }
+    }, [searchParams]);
 
     // Fetch tours from API
     useEffect(() => {
