@@ -34,24 +34,24 @@ const CustomerTable = ({ customers, onView, onEdit, onToggleLock }) => {
     }
 
     return (
-        <div className="overflow-x-auto">
-            <table className="table-fixed w-full text-sm">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+            <table className="min-w-full table-fixed text-sm">
                 <thead>
-                    <tr className="border-b border-gray-100">
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap w-[26%]">Khách hàng</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap w-[14%]">Số điện thoại</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap w-[13%]">Ngày đăng ký</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap w-[15%]">Tổng chi tiêu</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap w-[13%]">Hạng thành viên</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap w-[11%]">Trạng thái</th>
-                        <th className="text-left py-3 px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap w-[8%]">Thao tác</th>
+                    <tr className="bg-red-50 text-[#8B1A1A] uppercase text-xs">
+                        <th className="py-3 px-3 text-left w-[26%] whitespace-nowrap">Khách hàng</th>
+                        <th className="py-3 px-3 text-left w-[14%] whitespace-nowrap">Số điện thoại</th>
+                        <th className="py-3 px-3 text-left w-[13%] whitespace-nowrap">Ngày đăng ký</th>
+                        <th className="py-3 px-3 text-left w-[15%] whitespace-nowrap">Tổng chi tiêu</th>
+                        <th className="py-3 px-3 text-left w-[13%] whitespace-nowrap">Hạng thành viên</th>
+                        <th className="py-3 px-3 text-center w-[11%] whitespace-nowrap">Trạng thái</th>
+                        <th className="py-3 px-3 text-center w-[8%] whitespace-nowrap">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                     {customers.map((c) => (
-                        <tr key={c.id} className="hover:bg-gray-50 transition-colors">
+                        <tr key={c.id} className="border-t last:border-b hover:bg-gray-50 transition-colors">
                             {/* Khách hàng */}
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-3">
                                 <div className="flex items-center gap-3">
                                     <img
                                         src={c.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=e5e7eb&color=374151&size=40`}
@@ -66,27 +66,27 @@ const CustomerTable = ({ customers, onView, onEdit, onToggleLock }) => {
                             </td>
 
                             {/* Số điện thoại */}
-                            <td className="py-3 px-4 text-gray-600">{c.phone}</td>
+                            <td className="py-3 px-3 text-gray-600">{c.phone}</td>
 
                             {/* Ngày đăng ký */}
-                            <td className="py-3 px-4 text-gray-600 whitespace-nowrap">{c.registeredAt}</td>
+                            <td className="py-3 px-3 text-gray-700 whitespace-nowrap">{c.registeredAt}</td>
 
                             {/* Tổng chi tiêu */}
-                            <td className="py-3 px-4 font-semibold text-gray-800 whitespace-nowrap">{c.totalSpent}</td>
+                            <td className="py-3 px-3 font-semibold text-gray-900 whitespace-nowrap">{c.totalSpent}</td>
 
                             {/* Hạng thành viên */}
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-3">
                                 <TierBadge tier={c.tier} />
                             </td>
 
                             {/* Trạng thái */}
-                            <td className="py-3 px-4">
+                            <td className="py-3 px-3 text-center">
                                 <StatusBadge status={c.status} />
                             </td>
 
                             {/* Thao tác */}
-                            <td className="py-3 px-4">
-                                <div className="flex items-center gap-2">
+                            <td className="py-3 px-3 text-center">
+                                <div className="flex items-center justify-center gap-2">
                                     <button
                                         onClick={() => onView?.(c)}
                                         className="p-1.5 rounded hover:bg-blue-50 text-gray-400 hover:text-blue-500 transition-colors"

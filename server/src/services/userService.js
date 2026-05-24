@@ -41,7 +41,9 @@ const mapUser = (row) => ({
     phone: row.phone_number || "—",
     role: row.role,
     registeredAt: new Date(row.created_at).toLocaleDateString("vi-VN"),
+    registeredAtRaw: row.created_at,
     totalSpent: Math.floor(parseFloat(row.total_spent_raw || 0)).toLocaleString("en-US") + "đ",
+    totalSpentRaw: parseFloat(row.total_spent_raw || 0),
     tier: row.tier,
     status: row.is_active ? "active" : "locked",
     avatar: ""

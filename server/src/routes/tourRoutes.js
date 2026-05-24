@@ -18,5 +18,6 @@ router.delete("/:id/images", tourController.deleteTourImage);
 router.put("/:id", tourController.updateTour);
 router.delete("/:id", tourController.deleteTour);
 router.get("/:id/reviews", tourController.getTourReviews);
+router.get("/:id/pdf", tourController.exportTourItineraryPDF);
 
 export default router;

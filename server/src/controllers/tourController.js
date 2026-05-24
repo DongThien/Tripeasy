@@ -1,4 +1,5 @@
 import xlsx from "xlsx";
+import PDFDocument from 'pdfkit';
 import { pgPool } from "../config/db.js";
 import { insertTourRow } from "../models/tourModel.js";
 import {
@@ -12,6 +13,24 @@ import {
     deleteTourImageData,
     getTourReviewsData // IMPORT THÊM HÀM NÀY
 } from "../services/tourService.js";
+import { generateEmbedding, generateTourSearchText } from "../services/geminiService.js";
+
+// Helper function to update embedding for a tour
+const updateTourEmbedding = async (tourId) => {
+    try {
+        const tour = await getTourByIdData(tourId);
+        if (!tour) return;
+        const searchText = generateTourSearchText(tour);
+        const embedding = await generateEmbedding(searchText);
+        await pgPool.query(
+            "UPDATE tours SET embedding = $1 WHERE tour_id = $2",
+            [embedding, tourId]
+        );
+        console.log(`✅ Updated embedding for tour #${tourId}`);
+    } catch (err) {
+        console.error(`⚠️ Failed to update embedding for tour #${tourId}:`, err.message);
+    }
+};
 
 // GET /api/tours - Lấy tất cả tours (không limit mặc định)
 export const getAllTours = async (req, res) => {
@@ -33,6 +52,12 @@ export const getAllTours = async (req, res) => {
 export const createTour = async (req, res) => {
     try {
         const data = await createTourData(req.body);
+        
+        // Cập nhật embedding chạy ở background
+        if (data && data.tour_id) {
+            updateTourEmbedding(data.tour_id);
+        }
+
         res.status(201).json({
             success: true,
             data,
@@ -95,6 +120,10 @@ export const updateTour = async (req, res) => {
     try {
         const { id } = req.params;
         const data = await updateTourData(id, req.body);
+        
+        // Cập nhật embedding chạy ở background
+        updateTourEmbedding(id);
+
         res.json({ success: true, data, message: "Tour updated successfully" });
     } catch (err) {
         res.status(err.statusCode || 500).json({ success: false, data: null, message: err.message });
@@ -310,6 +339,7 @@ export const importToursFromExcel = async (req, res) => {
         await client.query("BEGIN");
 
         let importedCount = 0;
+        const importedTourIds = [];
 
         for (const row of rows) {
             const availabilityText = normalizeText(row["Trạng thái"]);
@@ -337,11 +367,21 @@ export const importToursFromExcel = async (req, res) => {
                 availability
             ];
 
-            await insertTourRow(client, tourValues);
+            const tourRow = await insertTourRow(client, tourValues);
+            if (tourRow && tourRow.tour_id) {
+                importedTourIds.push(tourRow.tour_id);
+            }
             importedCount += 1;
         }
 
         await client.query("COMMIT");
+
+        // Cập nhật embedding không đồng bộ ngoài transaction
+        (async () => {
+            for (const tourId of importedTourIds) {
+                await updateTourEmbedding(tourId);
+            }
+        })();
 
         return res.json({
             success: true,
@@ -357,5 +397,179 @@ export const importToursFromExcel = async (req, res) => {
         });
     } finally {
         client.release();
+    }
+};
+
+// GET /api/tours/:id/pdf - Xuất lịch trình tour dạng PDF hỗ trợ Tiếng Việt
+export const exportTourItineraryPDF = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tour = await getTourByIdData(id);
+        if (!tour) {
+            return res.status(404).json({ success: false, message: "Không tìm thấy tour" });
+        }
+
+        // Cấu hình Header để tải tệp PDF
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="lich-trinh-${id}.pdf"`);
+
+        const doc = new PDFDocument({ margin: 50 });
+        doc.pipe(res);
+
+        // Nạp font hệ thống Windows hỗ trợ Tiếng Việt
+        const fontPath = 'C:/Windows/Fonts/arial.ttf';
+        const fontBoldPath = 'C:/Windows/Fonts/arialbd.ttf';
+        
+        try {
+            doc.font(fontPath);
+        } catch (e) {
+            console.warn('System Arial font not found, falling back to Helvetica (accents may be lost):', e.message);
+        }
+
+        // Vẽ Header
+        doc.fillColor('#8B1A1A')
+           .fontSize(22);
+        try { doc.font(fontBoldPath); } catch(e){}
+        doc.text('TRIPEASY TRAVEL', { align: 'center' });
+        
+        doc.fillColor('#333333')
+           .fontSize(10);
+        try { doc.font(fontPath); } catch(e){}
+        doc.text('Hành trình du lịch trọn gói & chất lượng', { align: 'center' });
+        doc.moveDown(1.5);
+
+        // Đường kẻ ngăn cách
+        doc.strokeColor('#e0e0e0')
+           .lineWidth(1)
+           .moveTo(50, doc.y)
+           .lineTo(562, doc.y)
+           .stroke();
+        doc.moveDown(1.5);
+
+        // Tên Tour
+        doc.fillColor('#8B1A1A')
+           .fontSize(16);
+        try { doc.font(fontBoldPath); } catch(e){}
+        doc.text(tour.title, { align: 'left' });
+        doc.moveDown(0.5);
+
+        // Khung thông tin chung
+        doc.fillColor('#f9f9f9')
+           .rect(50, doc.y, 512, 75)
+           .fill()
+           .strokeColor('#e5e7eb')
+           .lineWidth(1)
+           .rect(50, doc.y, 512, 75)
+           .stroke();
+        
+        const infoY = doc.y + 10;
+        doc.fillColor('#4b5563')
+           .fontSize(9.5);
+        
+        try { doc.font(fontBoldPath); } catch(e){}
+        doc.text('Điểm đến:', 65, infoY);
+        doc.text('Thời lượng:', 65, infoY + 20);
+        doc.text('Khởi hành từ:', 65, infoY + 40);
+        
+        doc.text('Giá vé người lớn:', 320, infoY);
+        doc.text('Phương tiện:', 320, infoY + 20);
+
+        try { doc.font(fontPath); } catch(e){}
+        doc.fillColor('#1f2937');
+        doc.text(tour.destination || 'N/A', 140, infoY);
+        doc.text(tour.duration || 'N/A', 140, infoY + 20);
+        doc.text(tour.start_location || 'N/A', 140, infoY + 40);
+
+        const priceAdult = tour.price_adult ? Number(tour.price_adult).toLocaleString('vi-VN') + ' đ' : 'Liên hệ';
+        doc.fillColor('#8B1A1A');
+        try { doc.font(fontBoldPath); } catch(e){}
+        doc.text(priceAdult, 420, infoY);
+        try { doc.font(fontPath); } catch(e){}
+        doc.fillColor('#1f2937');
+        doc.text(tour.transport || 'N/A', 420, infoY + 20);
+
+        doc.moveDown(5.5); // Chừa không gian cho khung thông tin phía trên
+
+        // Điểm nhấn hành trình
+        const parseField = (field) => {
+            if (!field) return [];
+            if (typeof field === 'string') {
+                try { return JSON.parse(field); } catch (e) { return []; }
+            }
+            return Array.isArray(field) ? field : [];
+        };
+
+        const highlights = parseField(tour.highlights);
+        if (highlights.length > 0) {
+            doc.fillColor('#8B1A1A')
+               .fontSize(12);
+            try { doc.font(fontBoldPath); } catch(e){}
+            doc.text('ĐIỂM NHẤN HÀNH TRÌNH', { underline: true });
+            doc.moveDown(0.5);
+
+            doc.fillColor('#374151')
+               .fontSize(9);
+            try { doc.font(fontPath); } catch(e){}
+            
+            highlights.forEach((item) => {
+                const titleText = item.title ? `${item.title}: ` : '';
+                const descText = item.desc || '';
+                
+                doc.fillColor('#8B1A1A');
+                try { doc.font(fontBoldPath); } catch(e){}
+                doc.text(`• ${titleText}`, { continued: true });
+                doc.fillColor('#374151');
+                try { doc.font(fontPath); } catch(e){}
+                doc.text(descText);
+                doc.moveDown(0.2);
+            });
+            doc.moveDown(1);
+        }
+
+        // Lịch trình chi tiết
+        const itinerary = parseField(tour.itinerary);
+        if (itinerary.length > 0) {
+            doc.fillColor('#8B1A1A')
+               .fontSize(12);
+            try { doc.font(fontBoldPath); } catch(e){}
+            doc.text('LỊCH TRÌNH CHI TIẾT', { underline: true });
+            doc.moveDown(0.8);
+
+            itinerary.forEach((day, index) => {
+                doc.fillColor('#111827')
+                   .fontSize(10);
+                try { doc.font(fontBoldPath); } catch(e){}
+                doc.text(`Ngày ${day.day || (index + 1)}: ${day.title || ''}`);
+                doc.moveDown(0.3);
+
+                doc.fillColor('#4b5563')
+                   .fontSize(9);
+                try { doc.font(fontPath); } catch(e){}
+                doc.text(day.content || '', { align: 'justify', lineGap: 2 });
+                doc.moveDown(0.8);
+            });
+        }
+
+        // Footer trang cuối
+        doc.moveDown(1.5);
+        doc.strokeColor('#e5e7eb')
+           .lineWidth(1)
+           .moveTo(50, doc.y)
+           .lineTo(562, doc.y)
+           .stroke();
+        doc.moveDown(1);
+        
+        doc.fillColor('#9ca3af')
+           .fontSize(8);
+        doc.text('Tripeasy Travel - Số 3 đường Cầu Giấy, Láng Thượng, Đống Đa, Hà Nội', { align: 'center' });
+        doc.text('Hotline: 1900 1234 | Email: support@tripeasy.com | Website: tripeasy.com', { align: 'center' });
+
+        doc.end();
+
+    } catch (err) {
+        console.error('Error generating itinerary PDF:', err);
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, message: "Lỗi hệ thống khi sinh file PDF: " + err.message });
+        }
     }
 };

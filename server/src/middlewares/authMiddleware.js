@@ -28,3 +28,18 @@ export const verifyAdmin = (req, res, next) => {
         }
     });
 };
+
+// 3. Giải mã token nếu có (không chặn khách vãng lai)
+export const optionalVerifyToken = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.split(" ")[1];
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = decoded;
+        } catch (err) {
+            // Bỏ qua lỗi token cho khách vãng lai
+        }
+    }
+    next();
+};

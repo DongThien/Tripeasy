@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Calendar, Users, FileText, Landmark, ShieldCheck, Mail, Phone, MapPin, DollarSign, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { X, Calendar, Users, FileText, Landmark, ShieldCheck, Mail, Phone, MapPin, DollarSign, CheckCircle2, AlertTriangle, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import bookingService from '../../../services/bookingService';
 import { formatVND } from '../../../utils/formatHelper';
 
 const BookingDetailModal = ({ booking, onClose, onUpdateBooking }) => {
     const [updating, setUpdating] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
-    if (!booking) return null;
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!booking || !mounted) return null;
 
     const handleStatusChange = async (newPaymentStatus, newBookingStatus) => {
         const confirmMsg = newBookingStatus === 'CANCELLED' 
@@ -45,6 +50,10 @@ const BookingDetailModal = ({ booking, onClose, onUpdateBooking }) => {
         }
     };
 
+    const handlePrintInvoice = () => {
+        window.print();
+    };
+
     const isPending = booking.booking_status === 'PENDING';
     const isCompleted = booking.booking_status === 'COMPLETED';
     const isCancelled = booking.booking_status === 'CANCELLED';
@@ -52,8 +61,10 @@ const BookingDetailModal = ({ booking, onClose, onUpdateBooking }) => {
     const formattedBookedDate = new Date(booking.booked_at).toLocaleString('vi-VN');
     const formattedStartDate = new Date(booking.start_date).toLocaleDateString('vi-VN');
 
-    return createPortal(
-        <div className="fixed inset-0 z-[9999] w-screen h-screen bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+    return (
+        <>
+            {createPortal(
+                <div className="fixed inset-0 z-[9999] w-screen h-screen bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
                 {/* Header */}
                 <div className="bg-[#8B1A1A] px-6 py-4 flex items-center justify-between text-white flex-shrink-0">
@@ -175,7 +186,7 @@ const BookingDetailModal = ({ booking, onClose, onUpdateBooking }) => {
 
                 {/* Footer Action buttons */}
                 <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-between gap-3 flex-shrink-0 flex-wrap">
-                    <div>
+                    <div className="flex gap-2">
                         {isPending && (
                             <button
                                 onClick={() => handleStatusChange('PENDING', 'CANCELLED')}
@@ -185,6 +196,13 @@ const BookingDetailModal = ({ booking, onClose, onUpdateBooking }) => {
                                 Hủy đơn đặt
                             </button>
                         )}
+                        <button
+                            onClick={handlePrintInvoice}
+                            className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-1.5 shadow-sm active:scale-[0.98]"
+                        >
+                            <Printer className="w-4 h-4 text-gray-500" />
+                            In hóa đơn
+                        </button>
                     </div>
                     <div className="flex gap-2">
                         <button
@@ -205,8 +223,129 @@ const BookingDetailModal = ({ booking, onClose, onUpdateBooking }) => {
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        </div>,
+        document.body
+    )}
+        
+        {createPortal(
+            /* Print Only Invoice Template */
+            <div className="print-only p-8 text-gray-800 bg-white" style={{ fontFamily: "'Segoe UI', Roboto, sans-serif" }}>
+                <div className="print-flex flex justify-between items-center border-b-2 border-[#8B1A1A] pb-4 mb-6">
+                    <div>
+                        <div className="text-2xl font-extrabold text-[#8B1A1A] tracking-wider">TRIPEASY</div>
+                        <div className="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Trải nghiệm du lịch đích thực</div>
+                    </div>
+                    <div className="text-right text-xs text-gray-500 leading-relaxed">
+                        <strong>Công ty Cổ phần Tripeasy Việt Nam</strong><br />
+                        Số 3 đường Cầu Giấy, Láng Thượng, Đống Đa, Hà Nội<br />
+                        Hotline: 1900 1234 | Email: support@tripeasy.com
+                    </div>
+                </div>
+
+                <div className="text-center my-6">
+                    <h2 className="text-xl font-bold text-gray-900 tracking-wide uppercase">Hóa Đơn Đặt Tour Du Lịch</h2>
+                    <p className="text-xs text-gray-500 mt-1">Mã hóa đơn: <strong className="text-gray-900">#BK-{booking.booking_id}</strong> &nbsp;|&nbsp; Ngày lập: {formattedBookedDate}</p>
+                </div>
+
+                <div className="print-grid grid grid-cols-2 gap-8 mb-8 text-xs">
+                    <div className="border border-gray-200 rounded-xl p-4 space-y-2">
+                        <h4 className="font-bold text-[#8B1A1A] uppercase border-b pb-1.5 mb-2">Thông tin khách hàng</h4>
+                        <div className="flex justify-between"><span>Tên khách hàng:</span> <strong>{booking.customer_name}</strong></div>
+                        <div className="flex justify-between"><span>Số điện thoại:</span> <strong>{booking.customer_phone}</strong></div>
+                        <div className="flex justify-between"><span>Email nhận vé:</span> <strong>{booking.customer_email}</strong></div>
+                    </div>
+                    <div className="border border-gray-200 rounded-xl p-4 space-y-2">
+                        <h4 className="font-bold text-[#8B1A1A] uppercase border-b pb-1.5 mb-2">Thông tin thanh toán</h4>
+                        <div className="flex justify-between"><span>Phương thức:</span> <strong>{booking.payment_method === 'OFFICE' ? 'Tại văn phòng' : 'Chuyển khoản VietQR'}</strong></div>
+                        <div className="flex justify-between"><span>Trạng thái đơn:</span> <strong>{booking.status}</strong></div>
+                        <div className="flex justify-between"><span>Thanh toán:</span> <strong>{booking.payment}</strong></div>
+                    </div>
+                </div>
+
+                <h4 className="font-bold text-xs text-[#8B1A1A] uppercase border-b pb-1.5 mb-3">Chi tiết dịch vụ</h4>
+                <table className="w-full text-xs border-collapse border border-gray-200">
+                    <thead>
+                        <tr className="bg-gray-50 text-gray-750">
+                            <th className="border border-gray-200 p-3 text-left">Tên Tour Du Lịch</th>
+                            <th className="border border-gray-200 p-3 text-left">Ngày Đi</th>
+                            <th className="border border-gray-200 p-3 text-center">Số Lượng Khách</th>
+                            <th className="border border-gray-200 p-3 text-right">Thành Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td className="border border-gray-200 p-3">
+                                <strong className="text-gray-900 text-sm">{booking.tour_name}</strong>
+                            </td>
+                            <td className="border border-gray-200 p-3">{formattedStartDate}</td>
+                            <td className="border border-gray-200 p-3 text-center">{booking.num_adults} người lớn {booking.num_children > 0 ? `, ${booking.num_children} trẻ em` : ''}</td>
+                            <td className="border border-gray-200 p-3 text-right font-bold text-[#8B1A1A] text-sm">{formatVND(booking.total_price)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div className="text-right mt-6 border-t pt-4 text-sm">
+                    <span>Tổng tiền thanh toán (Đã bao gồm VAT):</span>
+                    <strong className="text-lg text-[#8B1A1A] font-extrabold ml-2">{formatVND(booking.total_price)}</strong>
+                </div>
+
+                <div className="text-center mt-16 pt-4 border-t text-[11px] text-gray-400 leading-relaxed">
+                    Cảm ơn quý khách đã tin tưởng và đồng hành cùng Tripeasy!<br />
+                    Vui lòng xuất trình hóa đơn/vé điện tử này khi khởi hành tour.<br />
+                    Tripeasy Việt Nam - Hotline: 1900 1234
+                </div>
+            </div>,
+            document.body
+        )}
+
+        {/* Print CSS Rules */}
+        <style dangerouslySetInnerHTML={{__html: `
+            @media screen {
+                .print-only { display: none !important; }
+            }
+            @media print {
+                /* Hide everything in the body except .print-only */
+                body > *:not(.print-only) {
+                    display: none !important;
+                }
+                /* Show only the print area and its contents */
+                .print-only, .print-only * {
+                    display: block !important;
+                }
+                /* Adjust table structure so it doesn't break display */
+                .print-only table {
+                    display: table !important;
+                    width: 100% !important;
+                    border-collapse: collapse !important;
+                }
+                .print-only thead {
+                    display: table-header-group !important;
+                }
+                .print-only tbody {
+                    display: table-row-group !important;
+                }
+                .print-only tr {
+                    display: table-row !important;
+                }
+                .print-only th, .print-only td {
+                    display: table-cell !important;
+                    padding: 10px !important;
+                    border: 1px solid #ddd !important;
+                }
+                .print-flex {
+                    display: flex !important;
+                    justify-content: space-between !important;
+                    align-items: center !important;
+                }
+                .print-grid {
+                    display: grid !important;
+                    grid-template-columns: 1fr 1fr !important;
+                    gap: 30px !important;
+                }
+            }
+        `}} />
+    </>
+);
 };
 
 export default BookingDetailModal;

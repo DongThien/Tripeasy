@@ -150,8 +150,8 @@ const ClientNavbar = () => {
                                 </span>
                                 <div>
                                     <div className="text-sm font-semibold text-gray-800">{displayName}</div>
-                                    <Link 
-                                        to="/client/my-bookings" 
+                                    <Link
+                                        to="/client/my-bookings"
                                         onClick={() => setMobileOpen(false)}
                                         className="text-xs text-[#8B1A1A] font-bold hover:underline"
                                     >

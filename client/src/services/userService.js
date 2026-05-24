@@ -12,5 +12,8 @@ export const updateUser = (id, data) =>
 export const toggleUserLock = (id) =>
     axiosClient.put(`/users/${id}/toggle-lock`).then((r) => r.data);
 
-const userService = { getAllUsers, getUserStats, updateUser, toggleUserLock };
+export const createUser = (data) =>
+    axiosClient.post('/users/register', { ...data, agreeTerms: true }).then((r) => r.data);
+
+const userService = { getAllUsers, getUserStats, updateUser, toggleUserLock, createUser };
 export default userService;

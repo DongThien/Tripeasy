@@ -1,5 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
+import ChatbotWidget from '../components/client/chat/ChatbotWidget';
 
 const ClientLayout = () => {
     return (
@@ -8,6 +9,7 @@ const ClientLayout = () => {
                 {/* Outlet chính là nơi Home.jsx sẽ được render vào */}
                 <Outlet />
             </main>
+            <ChatbotWidget />
         </div>
     );
 };
