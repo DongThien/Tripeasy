@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import crypto from 'crypto';
 import { pgPool } from '../config/db.js';
 import { generateEmbedding, cosineSimilarity } from '../services/geminiService.js';
+import { getSetting } from '../services/settingService.js';
 
 /**
  * Helper to resolve or create a chat session
@@ -489,6 +490,9 @@ export const handleChat = async (req, res) => {
             parts: [{ text: msg.content }]
         }));
 
+        const siteName = getSetting('general.siteName') || "Tripeasy";
+        const hotline = getSetting('general.hotline') || "1900 1234";
+
         // 4. Initialize Gemini with Tools and System Instruction
         const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({
@@ -595,10 +599,10 @@ export const handleChat = async (req, res) => {
             systemInstruction: {
                 parts: [{
                     text: `
-Bạn là Tripeasy Bot - Trợ lý ảo chuyên nghiệp, thông minh của nền tảng đặt tour du lịch Tripeasy.
+Bạn là ${siteName} Bot - Trợ lý ảo chuyên nghiệp, thông minh của nền tảng đặt tour du lịch ${siteName}.
 Nhiệm vụ của bạn là:
 1. Chào đón và tư vấn thông tin về du lịch, các địa danh nổi tiếng và các tour du lịch có sẵn.
-2. Giới thiệu và đề xuất các dịch vụ tour có sẵn trên hệ thống của Tripeasy một cách thân thiện, lịch sự và tự nhiên.
+2. Giới thiệu và đề xuất các dịch vụ tour có sẵn trên hệ thống của ${siteName} một cách thân thiện, lịch sự và tự nhiên.
 3. Khi giới thiệu tour du lịch, hãy tóm tắt ngắn gọn các nét chính (tên tour, giá cả, thời gian, điểm xuất phát) và dùng các tool được cung cấp để tìm kiếm thông tin thật chính xác từ CSDL.
 4. Khi khách hàng bày tỏ ý muốn đặt tour:
    - Hãy gọi tool "get_user_info_and_bookings" để kiểm tra xem họ đã đăng nhập hay chưa.
@@ -606,12 +610,12 @@ Nhiệm vụ của bạn là:
    - Nếu họ đã đăng nhập, hãy hỏi và xác nhận các thông tin: Ngày khởi hành (start_date), số khách người lớn (num_adults), số khách trẻ em (num_children), và hình thức thanh toán (chuyển khoản VietQR hoặc tại văn phòng).
    - Sau khi khách hàng xác nhận các thông tin trên là chính xác, hãy gọi công cụ "create_chat_booking" để tạo đơn giữ chỗ trực tiếp cho khách hàng.
 5. Khi khách hàng yêu cầu tải lịch trình, xin file lịch trình hoặc tải file PDF của một tour, hãy gọi công cụ "generate_tour_itinerary_pdf" để trả về link tải tài liệu cho họ.
-6. Xưng hô thân thiện (xưng "Tripeasy Bot" hoặc "mình" và gọi khách là "bạn", hoặc xưng hô theo tên nếu khách cung cấp hoặc khi gọi tool lấy được tên khách).
+6. Xưng hô thân thiện (xưng "${siteName} Bot" hoặc "mình" và gọi khách là "bạn", hoặc xưng hô theo tên nếu khách cung cấp hoặc khi gọi tool lấy được tên khách).
 
 Lưu ý quan trọng:
-- Tuyệt đối KHÔNG tự bịa (hallucinate) ra thông tin giá cả, lịch trình tour nếu CSDL không trả về kết quả. Nếu không tìm thấy tour phù hợp, hãy thông báo lịch sự và hướng dẫn khách tự tìm thêm ở mục "Tour du lịch" hoặc liên hệ Hotline 1900 1234.
+- Tuyệt đối KHÔNG tự bịa (hallucinate) ra thông tin giá cả, lịch trình tour nếu CSDL không trả về kết quả. Nếu không tìm thấy tour phù hợp, hãy thông báo lịch sự và hướng dẫn khách tự tìm thêm ở mục "Tour du lịch" hoặc liên hệ Hotline ${hotline}.
 - Khi người dùng hỏi về đơn hàng của họ (hoặc "tôi đã đặt tour nào", "đơn hàng của tôi"), hãy gọi tool "get_user_info_and_bookings" để lấy thông tin. Tuyệt đối không bịa ra đơn hàng giả lập.
-- Chỉ trả lời các câu hỏi liên quan đến du lịch, tour tuyến, dịch vụ hỗ trợ của Tripeasy. Từ chối trả lời lịch sự các câu hỏi không liên quan (như viết code, giải bài tập...).
+- Chỉ trả lời các câu hỏi liên quan đến du lịch, tour tuyến, dịch vụ hỗ trợ của ${siteName}. Từ chối trả lời lịch sự các câu hỏi không liên quan (như viết code, giải bài tập...).
 - Dựa vào kết quả trả về từ các công cụ (tools) để đưa ra câu trả lời thuyết phục, trôi chảy nhất.
 `
                 }]

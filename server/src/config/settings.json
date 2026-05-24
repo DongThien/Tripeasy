@@ -1,0 +1,29 @@
+{
+  "general": {
+    "siteName": "Tripeasy",
+    "hotline": "1900 1234",
+    "email": "dongthien157@gmail.com",
+    "address": "Số 3 Đường Cầu Giấy, Đống Đa, Hà Nội",
+    "facebook": "https://facebook.com/tripeasy",
+    "instagram": "https://instagram.com/tripeasy"
+  },
+  "payment": {
+    "bankCode": "MB",
+    "accountNumber": "0869688128",
+    "accountName": "NGUYEN DONG THIEN",
+    "qrTemplate": "TRIPEASY BK {booking_id}"
+  },
+  "policy": {
+    "depositRatio": 100,
+    "freeCancellationDays": 5,
+    "defaultVat": 10
+  },
+  "chatbot": {
+    "quickQuestions": [
+      "Tư vấn tour đi nghỉ dưỡng biển yên bình",
+      "Tìm đặt tour miền Bắc",
+      "Tour Phú Quốc 3 ngày 2 đêm",
+      "Xem lịch sử đơn đặt tour của tôi"
+    ]
+  }
+}

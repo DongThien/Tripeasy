@@ -7,6 +7,7 @@ import ClientNavbar from '../../components/common/ClientNavbar';
 import ClientFooter from '../../components/common/ClientFooter';
 import { formatVND } from '../../utils/formatHelper';
 import toast from 'react-hot-toast';
+import settingService from '../../services/settingService';
 
 const Checkout = () => {
     const { id } = useParams();
@@ -23,6 +24,7 @@ const Checkout = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('BANK_TRANSFER'); // BANK_TRANSFER or OFFICE
+    const [sysSettings, setSysSettings] = useState(null);
     const [bookingResult, setBookingResult] = useState(null); // stores result after successful booking
     const [zoomQR, setZoomQR] = useState(false);
 
@@ -52,14 +54,26 @@ const Checkout = () => {
             return;
         }
 
-        const fetchTour = async () => {
+        const fetchData = async () => {
             try {
-                const res = await axiosClient.get(`/tours/${id}`);
-                if (res.data.success) {
-                    setTour(res.data.data);
+                const [tourRes, settingsRes] = await Promise.all([
+                    axiosClient.get(`/tours/${id}`),
+                    settingService.getSettings().catch(err => {
+                        console.error('Failed to load settings:', err);
+                        return null;
+                    })
+                ]);
+
+                if (tourRes.data.success) {
+                    setTour(tourRes.data.data);
                 } else {
                     toast.error("Không tìm thấy thông tin tour");
                     navigate('/client/tours');
+                    return;
+                }
+
+                if (settingsRes && settingsRes.success) {
+                    setSysSettings(settingsRes.data);
                 }
             } catch (err) {
                 console.error(err);
@@ -70,7 +84,7 @@ const Checkout = () => {
             }
         };
 
-        fetchTour();
+        fetchData();
     }, [id, navigate]);
 
     // Parse departures
@@ -148,7 +162,12 @@ const Checkout = () => {
 
     // Render booking success screen
     if (bookingResult) {
-        const qrUrl = `https://img.vietqr.io/image/mb-0869688128-compact2.png?amount=${totalPrice}&addInfo=TRIPEASY%20BK%20${bookingResult.booking_id}&accountName=NGUYEN%20DONG%20THIEN`;
+        const bankCode = sysSettings?.payment?.bankCode || 'mb';
+        const accountNumber = sysSettings?.payment?.accountNumber || '0869688128';
+        const accountName = encodeURIComponent(sysSettings?.payment?.accountName || 'NGUYEN DONG THIEN');
+        const siteName = sysSettings?.general?.siteName || 'TRIPEASY';
+        const addInfo = encodeURIComponent(`${siteName.toUpperCase()} BK ${bookingResult.booking_id}`);
+        const qrUrl = `https://img.vietqr.io/image/${bankCode}-${accountNumber}-compact2.png?amount=${totalPrice}&addInfo=${addInfo}&accountName=${accountName}`;
         
         return (
             <div className="min-h-screen bg-[#FDFBF7] pt-24 pb-16">
@@ -213,15 +232,15 @@ const Checkout = () => {
                                     <div className="text-left space-y-2 text-sm flex-1">
                                         <div className="flex justify-between border-b border-gray-100 pb-2">
                                             <span className="text-gray-500 font-medium">Ngân hàng:</span>
-                                            <span className="text-gray-800 font-bold">Ngân hàng Quân Đội (MB Bank)</span>
+                                            <span className="text-gray-800 font-bold">{(sysSettings?.payment?.bankCode || 'MB').toUpperCase()}</span>
                                         </div>
                                         <div className="flex justify-between border-b border-gray-100 pb-2">
                                             <span className="text-gray-500 font-medium">Số tài khoản:</span>
-                                            <span className="text-gray-800 font-extrabold">0869688128</span>
+                                            <span className="text-gray-800 font-extrabold">{sysSettings?.payment?.accountNumber || '0869688128'}</span>
                                         </div>
                                         <div className="flex justify-between border-b border-gray-100 pb-2">
                                             <span className="text-gray-500 font-medium">Chủ tài khoản:</span>
-                                            <span className="text-gray-800 font-bold">NGUYEN DONG THIEN</span>
+                                            <span className="text-gray-800 font-bold">{sysSettings?.payment?.accountName || 'NGUYEN DONG THIEN'}</span>
                                         </div>
                                         <div className="flex justify-between border-b border-gray-100 pb-2">
                                             <span className="text-gray-500 font-medium">Số tiền:</span>
@@ -239,16 +258,16 @@ const Checkout = () => {
                                 <h3 className="text-lg font-bold text-gray-800 mb-4">Hướng dẫn thanh toán tại văn phòng</h3>
                                 <div className="bg-red-50/50 p-6 rounded-2xl border border-red-100 text-left space-y-4">
                                     <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                                        Quý khách vui lòng qua văn phòng đại diện của Tripeasy để hoàn tất thủ tục đóng tiền và nhận vé tour chính thức trong vòng 24 giờ.
+                                        Quý khách vui lòng qua văn phòng đại diện của {sysSettings?.general?.siteName || 'Tripeasy'} để hoàn tất thủ tục đóng tiền và nhận vé tour chính thức trong vòng 24 giờ.
                                     </p>
                                     <div className="space-y-2 text-sm text-gray-600">
                                         <div className="flex items-start gap-2">
                                             <MapPin className="w-4 h-4 text-[#8B1A1A] mt-0.5 flex-shrink-0" />
-                                            <span><strong>Địa chỉ:</strong> Số 3 đường Cầu Giấy, phường Láng Thượng, quận Đống Đa, Hà Nội</span>
+                                            <span><strong>Địa chỉ:</strong> {sysSettings?.general?.address || 'Số 3 đường Cầu Giấy, phường Láng Thượng, quận Đống Đa, Hà Nội'}</span>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <Phone className="w-4 h-4 text-[#8B1A1A] flex-shrink-0" />
-                                            <span><strong>Điện thoại:</strong> 1900 1234 (Hỗ trợ 24/7)</span>
+                                            <span><strong>Điện thoại:</strong> {sysSettings?.general?.hotline || '1900 1234'} (Hỗ trợ 24/7)</span>
                                         </div>
                                     </div>
                                 </div>

@@ -10,6 +10,7 @@ import {
     fetchDepartureByIdRow,
     updateDepartureStockRow
 } from "../models/bookingModel.js";
+import { getSetting } from "./settingService.js";
 
 const BOOKING_STATUS_VI = {
     PENDING: "Chờ xử lý",
@@ -53,24 +54,31 @@ const sendBookingConfirmationEmail = async (booking) => {
     const { booking_id, title, user_name, email, num_adults, num_children, total_price, start_date, payment_method } = booking;
     const paymentMethodText = payment_method === 'OFFICE' ? 'Thanh toán trực tiếp tại văn phòng' : 'Chuyển khoản Ngân hàng (VietQR)';
     
+    const siteName = getSetting('general.siteName') || "Tripeasy";
+    const hotline = getSetting('general.hotline') || "1900 1234";
+    const contactAddress = getSetting('general.address') || "Số 3 đường Cầu Giấy, phường Láng Thượng, quận Đống Đa, Hà Nội";
+    const bankCode = getSetting('payment.bankCode') || "MB";
+    const accountNumber = getSetting('payment.accountNumber') || "0869688128";
+    const accountName = getSetting('payment.accountName') || "NGUYEN DONG THIEN";
+
     let paymentInstructions = "";
     if (payment_method === 'OFFICE') {
         paymentInstructions = `
             <div style="background-color: #fdfdfd; border: 1px dashed #8B1A1A; padding: 15px; border-radius: 8px; margin-top: 15px;">
                 <strong style="color: #8B1A1A;">📍 Hướng dẫn thanh toán tại văn phòng:</strong><br/>
-                Quý khách vui lòng đến địa chỉ văn phòng của Tripeasy tại <strong>Số 3 đường Cầu Giấy, phường Láng Thượng, quận Đống Đa, Hà Nội</strong> trong vòng 24 giờ kể từ thời điểm đặt để thực hiện thanh toán và nhận vé tour chính thức.<br/>
-                📞 Hotline hỗ trợ 24/7: <strong>1900 1234</strong>.
+                Quý khách vui lòng đến địa chỉ văn phòng của ${siteName} tại <strong>${contactAddress}</strong> trong vòng 24 giờ kể từ thời điểm đặt để thực hiện thanh toán và nhận vé tour chính thức.<br/>
+                📞 Hotline hỗ trợ 24/7: <strong>${hotline}</strong>.
             </div>
         `;
     } else {
         paymentInstructions = `
             <div style="background-color: #fdfdfd; border: 1px dashed #8B1A1A; padding: 15px; border-radius: 8px; margin-top: 15px;">
                 <strong style="color: #8B1A1A;">💳 Hướng dẫn thanh toán chuyển khoản:</strong><br/>
-                Quý khách vui lòng thực hiện chuyển khoản vào tài khoản ngân hàng của Tripeasy:<br/>
+                Quý khách vui lòng thực hiện chuyển khoản vào tài khoản ngân hàng của ${siteName}:<br/>
                 <ul style="margin: 5px 0; padding-left: 20px;">
-                    <li>Ngân hàng: <strong>Ngân hàng Quân Đội (MB Bank)</strong></li>
-                    <li>Số tài khoản: <strong>0869688128</strong></li>
-                    <li>Chủ tài khoản: <strong>NGUYEN DONG THIEN</strong></li>
+                    <li>Ngân hàng: <strong>${bankCode}</strong></li>
+                    <li>Số tài khoản: <strong>${accountNumber}</strong></li>
+                    <li>Chủ tài khoản: <strong>${accountName}</strong></li>
                     <li>Số tiền cần chuyển: <strong style="color: #8B1A1A;">${formatVNDEmail(total_price)}</strong></li>
                     <li>Nội dung chuyển khoản (bắt buộc): <strong>TRIPEASY BK ${booking_id}</strong></li>
                 </ul>
@@ -154,6 +162,10 @@ const sendBookingUpdateEmail = async (booking) => {
 
     const { booking_id, title, user_name, email, num_adults, num_children, total_price, start_date, booking_status, payment_status } = booking;
     
+    const siteName = getSetting('general.siteName') || "Tripeasy";
+    const hotline = getSetting('general.hotline') || "1900 1234";
+    const contactAddress = getSetting('general.address') || "Số 3 đường Cầu Giấy, phường Láng Thượng, quận Đống Đa, Hà Nội";
+
     let statusText = "Chờ xử lý";
     let statusColor = "#dd6b20";
     let additionalInfo = "";
@@ -163,7 +175,7 @@ const sendBookingUpdateEmail = async (booking) => {
         statusColor = "#38a169";
         additionalInfo = `
             <p style="color: #2f855a; font-weight: bold;">🎉 Đơn hàng của quý khách đã được xác nhận thanh toán thành công!</p>
-            <p>Tripeasy xin chân thành cảm ơn quý khách đã hoàn tất thanh toán số tiền <strong>${formatVNDEmail(total_price)}</strong>. Đơn đặt tour của quý khách hiện đã chuyển sang trạng thái <strong>ĐÃ HOÀN THÀNH</strong> và được bảo đảm chỗ trên chuyến đi khởi hành ngày <strong>${new Date(start_date).toLocaleDateString('vi-VN')}</strong>.</p>
+            <p>${siteName} xin chân thành cảm ơn quý khách đã hoàn tất thanh toán số tiền <strong>${formatVNDEmail(total_price)}</strong>. Đơn đặt tour của quý khách hiện đã chuyển sang trạng thái <strong>ĐÃ HOÀN THÀNH</strong> và được bảo đảm chỗ trên chuyến đi khởi hành ngày <strong>${new Date(start_date).toLocaleDateString('vi-VN')}</strong>.</p>
             <p>Chúng tôi đã đính kèm vé du lịch điện tử kèm mã đơn hàng này. Quý khách vui lòng chuẩn bị hành lý và lưu lại thông tin này để xuất trình cho Hướng dẫn viên khi tập trung khởi hành.</p>
         `;
     } else if (booking_status === 'CONFIRMED') {
@@ -179,7 +191,7 @@ const sendBookingUpdateEmail = async (booking) => {
         additionalInfo = `
             <p style="color: #9b2c2c; font-weight: bold;">❌ Đơn đặt tour đã được hủy bỏ.</p>
             <p>Hệ thống ghi nhận đơn đặt tour số <strong>#BK-${booking_id}</strong> của quý khách đã hủy. Số lượng chỗ trống đã được giải phóng trở lại cho hệ thống du lịch.</p>
-            <p>Nếu việc hủy đơn này là do nhầm lẫn hoặc quý khách muốn hoàn tiền cọc/đổi tour, vui lòng phản hồi email này hoặc liên hệ hotline <strong>1900 1234</strong> để được xử lý thủ tục.</p>
+            <p>Nếu việc hủy đơn này là do nhầm lẫn hoặc quý khách muốn hoàn tiền cọc/đổi tour, vui lòng phản hồi email này hoặc liên hệ hotline <strong>${hotline}</strong> để được xử lý thủ tục.</p>
         `;
     }
 
@@ -188,18 +200,18 @@ const sendBookingUpdateEmail = async (booking) => {
     const formattedStartDate = new Date(start_date).toLocaleDateString('vi-VN');
 
     const mailOptions = {
-        from: `"Tripeasy" <${process.env.EMAIL_USER}>`,
+        from: `"${siteName}" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: `[Tripeasy] Cập nhật đơn đặt tour #${booking_id} - ${statusText}`,
+        subject: `[${siteName}] Cập nhật đơn đặt tour #${booking_id} - ${statusText}`,
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; padding: 25px; border-radius: 12px; color: #2d3748;">
                 <div style="text-align: center; border-bottom: 3px solid #8B1A1A; padding-bottom: 15px; margin-bottom: 20px;">
-                    <h2 style="color: #8B1A1A; margin: 0; font-size: 24px;">TRIPEASY</h2>
+                    <h2 style="color: #8B1A1A; margin: 0; font-size: 24px;">${siteName.toUpperCase()}</h2>
                     <p style="font-size: 13px; color: #718096; margin: 5px 0 0 0;">THÔNG BÁO CẬP NHẬT TRẠNG THÁI</p>
                 </div>
                 
                 <p>Kính chào Quý khách <strong>${user_name}</strong>,</p>
-                <p>Tripeasy xin thông báo đơn đặt tour <strong>#BK-${booking_id}</strong> của Quý khách đã có cập nhật trạng thái mới trên hệ thống:</p>
+                <p>${siteName} xin thông báo đơn đặt tour <strong>#BK-${booking_id}</strong> của Quý khách đã có cập nhật trạng thái mới trên hệ thống:</p>
                 
                 <div style="background-color: #f7fafc; padding: 18px; border-radius: 8px; margin: 20px 0; border: 1px solid #edf2f7;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
@@ -235,12 +247,12 @@ const sendBookingUpdateEmail = async (booking) => {
                 </div>
 
                 <p style="margin-top: 25px; font-size: 14px;">
-                    Nếu quý khách cần hỗ trợ thêm thông tin gì khác, xin vui lòng gọi hotline <strong>1900 1234</strong> để được xử lý lập tức.
+                    Nếu quý khách cần hỗ trợ thêm thông tin gì khác, xin vui lòng gọi hotline <strong>${hotline}</strong> để được xử lý lập tức.
                 </p>
                 
                 <div style="border-top: 1px solid #edf2f7; margin-top: 30px; padding-top: 15px; font-size: 12px; color: #a0aec0; text-align: center;">
-                    <p style="margin: 0;">© 2026 Tripeasy. Mọi quyền được bảo lưu.</p>
-                    <p style="margin: 5px 0 0 0;">Số 3 đường Cầu Giấy, phường Láng Thượng, quận Đống Đa, Hà Nội | Hotline: 1900 1234</p>
+                    <p style="margin: 0;">© 2026 ${siteName}. Mọi quyền được bảo lưu.</p>
+                    <p style="margin: 5px 0 0 0;">${contactAddress} | Hotline: ${hotline}</p>
                 </div>
             </div>
         `

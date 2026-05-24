@@ -2,14 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, Bot, Sparkles, SendHorizontal } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import chatService from '../../../services/chatService';
+import settingService from '../../../services/settingService';
 import toast from 'react-hot-toast';
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80";
+
+const getWelcomeMessage = (siteName = 'Tripeasy') => ({
+    role: 'model',
+    text: `Xin chào! Mình là **${siteName} Bot** 🤖, trợ lý ảo thông minh của ${siteName}.\n\nMình có thể giúp gì cho bạn hôm nay?\n- Tư vấn các tour du lịch hot nhất\n- Gợi ý điểm đến du lịch theo yêu cầu\n- Hướng dẫn đặt tour và thanh toán nhanh chóng`,
+    time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+});
 
 const ChatbotWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [message, setMessage] = useState('');
     const [sessionId, setSessionId] = useState(null);
+    const [sysSettings, setSysSettings] = useState(null);
     const [messages, setMessages] = useState(() => {
         // Load chat history from legacy localStorage if exists, otherwise load welcome message
         const saved = localStorage.getItem('tripeasy_chat_history');
@@ -20,13 +28,7 @@ const ChatbotWidget = () => {
                 console.error(e);
             }
         }
-        return [
-            {
-                role: 'model',
-                text: 'Xin chào! Mình là **Tripeasy Bot** 🤖, trợ lý ảo thông minh của Tripeasy.\n\nMình có thể giúp gì cho bạn hôm nay?\n- Tư vấn các tour du lịch hot nhất\n- Gợi ý điểm đến du lịch theo yêu cầu\n- Hướng dẫn đặt tour và thanh toán nhanh chóng',
-                time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-            }
-        ];
+        return [getWelcomeMessage()];
     });
     const [isLoading, setIsLoading] = useState(false);
     const [selectedQr, setSelectedQr] = useState(null);
@@ -54,6 +56,30 @@ const ChatbotWidget = () => {
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
+    // Fetch system settings on mount
+    useEffect(() => {
+        const fetchSysSettings = async () => {
+            try {
+                const res = await settingService.getSettings();
+                if (res && res.success) {
+                    setSysSettings(res.data);
+                    
+                    // If messages only has the initial fallback welcome message, update it with correct siteName
+                    const siteName = res.data.general?.siteName || 'Tripeasy';
+                    setMessages(prev => {
+                        if (prev.length === 1 && prev[0].role === 'model' && prev[0].text.includes('Tripeasy Bot')) {
+                            return [getWelcomeMessage(siteName)];
+                        }
+                        return prev;
+                    });
+                }
+            } catch (err) {
+                console.error('Error fetching settings for chatbot:', err);
+            }
+        };
+        fetchSysSettings();
+    }, []);
+
     // Initialize/sync session and fetch message history whenever the authentication token changes
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -71,13 +97,7 @@ const ChatbotWidget = () => {
             localStorage.setItem('tripeasy_chat_session', sId);
             localStorage.removeItem('tripeasy_chat_history');
             setSessionId(sId);
-            setMessages([
-                {
-                    role: 'model',
-                    text: 'Xin chào! Mình là **Tripeasy Bot** 🤖, trợ lý ảo thông minh của Tripeasy.\n\nMình có thể giúp gì cho bạn hôm nay?\n- Tư vấn các tour du lịch hot nhất\n- Gợi ý điểm đến du lịch theo yêu cầu\n- Hướng dẫn đặt tour và thanh toán nhanh chóng',
-                    time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-                }
-            ]);
+            setMessages([getWelcomeMessage(sysSettings?.general?.siteName || 'Tripeasy')]);
             return;
         }
 
@@ -103,13 +123,7 @@ const ChatbotWidget = () => {
                         setMessages(res.messages);
                     } else {
                         // Reset to welcome message if no history on backend
-                        setMessages([
-                            {
-                                role: 'model',
-                                text: 'Xin chào! Mình là **Tripeasy Bot** 🤖, trợ lý ảo thông minh của Tripeasy.\n\nMình có thể giúp gì cho bạn hôm nay?\n- Tư vấn các tour du lịch hot nhất\n- Gợi ý điểm đến du lịch theo yêu cầu\n- Hướng dẫn đặt tour và thanh toán nhanh chóng',
-                                time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-                            }
-                        ]);
+                        setMessages([getWelcomeMessage(sysSettings?.general?.siteName || 'Tripeasy')]);
                     }
                 }
             } catch (err) {
@@ -143,14 +157,11 @@ const ChatbotWidget = () => {
         }
     };
 
-    // Send Message Handler
-    const handleSend = async (e) => {
-        e.preventDefault();
-        if (!message.trim() || isLoading) return;
+    // Send Message Helper (handles sending text to AI)
+    const sendMessageText = async (text) => {
+        if (!text.trim() || isLoading) return;
 
-        const userMessage = message.trim();
-        setMessage('');
-
+        const userMessage = text.trim();
         const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
         // Add user message to state
@@ -196,6 +207,16 @@ const ChatbotWidget = () => {
         }
     };
 
+    // Send Message Handler
+    const handleSend = async (e) => {
+        e.preventDefault();
+        if (!message.trim() || isLoading) return;
+
+        const userMessage = message.trim();
+        setMessage('');
+        await sendMessageText(userMessage);
+    };
+
     // Reset Chat History Handler
     const handleClearChat = async () => {
         if (window.confirm('Bạn có muốn xóa toàn bộ lịch sử trò chuyện này không?')) {
@@ -203,10 +224,11 @@ const ChatbotWidget = () => {
                 if (sessionId) {
                     await chatService.clearChatHistory(sessionId);
                 }
+                const siteName = sysSettings?.general?.siteName || 'Tripeasy';
                 const clearedMsg = [
                     {
                         role: 'model',
-                        text: 'Lịch sử trò chuyện đã được làm sạch. Mình là **Tripeasy Bot** 🤖, rất vui được tiếp tục hỗ trợ bạn!',
+                        text: `Lịch sử trò chuyện đã được làm sạch. Mình là **${siteName} Bot** 🤖, rất vui được tiếp tục hỗ trợ bạn!`,
                         time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
                     }
                 ];
@@ -442,35 +464,51 @@ const ChatbotWidget = () => {
                                                 <p><strong className="text-gray-800">Tổng tiền:</strong> <span className="text-xs font-extrabold text-[#8B1A1A]">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(msg.metadata.booking.total_price)}</span></p>
                                             </div>
 
-                                            {msg.metadata.booking.payment_method === 'BANK_TRANSFER' ? (
-                                                <div className="border-t border-gray-100 pt-2.5 space-y-2 text-center">
-                                                    <p className="text-[9px] text-gray-400 font-medium">Nhấp vào QR Code để phóng to:</p>
-                                                    <div 
-                                                        className="relative w-28 h-28 mx-auto border border-gray-100 rounded-xl p-1 bg-white shadow-sm hover:scale-105 transition-transform duration-300 cursor-pointer group"
-                                                        onClick={() => setSelectedQr(`https://img.vietqr.io/image/MB-0869688128-compact2.png?amount=${msg.metadata.booking.total_price}&addInfo=TRIPEASY%20BK%2520${msg.metadata.booking.booking_id}&accountName=NGUYEN%2520DONG%2520THIEN`)}
-                                                    >
-                                                        <img 
-                                                            src={`https://img.vietqr.io/image/MB-0869688128-compact2.png?amount=${msg.metadata.booking.total_price}&addInfo=TRIPEASY%20BK%2520${msg.metadata.booking.booking_id}&accountName=NGUYEN%2520DONG%2520THIEN`}
-                                                            alt="Mã VietQR"
-                                                            className="w-full h-full object-contain"
-                                                        />
-                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl flex items-center justify-center text-white text-[9px] font-bold">
-                                                            🔍 Phóng to
+                                            {msg.metadata.booking.payment_method === 'BANK_TRANSFER' ? (() => {
+                                                const bankCode = sysSettings?.payment?.bankCode || 'mb';
+                                                const accountNumber = sysSettings?.payment?.accountNumber || '0869688128';
+                                                const accountName = sysSettings?.payment?.accountName || 'NGUYEN DONG THIEN';
+                                                const qrTemplate = sysSettings?.payment?.qrTemplate || 'TRIPEASY BK {booking_id}';
+                                                
+                                                const addInfoText = qrTemplate.replace('{booking_id}', msg.metadata.booking.booking_id);
+                                                const encodedAddInfo = encodeURIComponent(addInfoText);
+                                                const encodedAccountName = encodeURIComponent(accountName);
+                                                const qrUrl = `https://img.vietqr.io/image/${bankCode.toLowerCase()}-${accountNumber}-compact2.png?amount=${msg.metadata.booking.total_price}&addInfo=${encodedAddInfo}&accountName=${encodedAccountName}`;
+                                                
+                                                return (
+                                                    <div className="border-t border-gray-100 pt-2.5 space-y-2 text-center">
+                                                        <p className="text-[9px] text-gray-400 font-medium">Nhấp vào QR Code để phóng to:</p>
+                                                        <div 
+                                                            className="relative w-28 h-28 mx-auto border border-gray-100 rounded-xl p-1 bg-white shadow-sm hover:scale-105 transition-transform duration-300 cursor-pointer group"
+                                                            onClick={() => setSelectedQr(qrUrl)}
+                                                        >
+                                                            <img 
+                                                                src={qrUrl}
+                                                                alt="Mã VietQR"
+                                                                className="w-full h-full object-contain"
+                                                            />
+                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl flex items-center justify-center text-white text-[9px] font-bold">
+                                                                🔍 Phóng to
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-[9px] text-gray-500 leading-relaxed text-left bg-gray-50/50 p-2 rounded-xl border border-gray-100 space-y-0.5">
+                                                            <p className="font-bold text-gray-600">Thông tin tài khoản:</p>
+                                                            <p>• {bankCode.toUpperCase()}: <span className="font-semibold text-gray-800">{accountNumber}</span></p>
+                                                            <p>• Chủ TK: <span className="font-semibold text-gray-800">{accountName}</span></p>
+                                                            <p>• Nội dung: <span className="font-bold text-[#8B1A1A]">{addInfoText}</span></p>
                                                         </div>
                                                     </div>
-                                                    <div className="text-[9px] text-gray-500 leading-relaxed text-left bg-gray-50/50 p-2 rounded-xl border border-gray-100 space-y-0.5">
-                                                        <p className="font-bold text-gray-600">Thông tin tài khoản:</p>
-                                                        <p>• MB Bank: <span className="font-semibold text-gray-800">0869688128</span></p>
-                                                        <p>• Chủ TK: <span className="font-semibold text-gray-800">NGUYEN DONG THIEN</span></p>
-                                                        <p>• Nội dung: <span className="font-bold text-[#8B1A1A]">TRIPEASY BK {msg.metadata.booking.booking_id}</span></p>
+                                                );
+                                            })() : (() => {
+                                                const siteName = sysSettings?.general?.siteName || 'Tripeasy';
+                                                const address = sysSettings?.general?.address || 'Số 3 Cầu Giấy, Hà Nội';
+                                                return (
+                                                    <div className="border-t border-gray-100 pt-2.5 text-[9px] text-gray-500 bg-gray-50/50 p-2 rounded-xl border border-gray-100">
+                                                        <p className="font-bold text-gray-600">📍 Hướng dẫn thanh toán:</p>
+                                                        <p className="mt-1 leading-normal">Vui lòng thanh toán trực tiếp tại văn phòng {siteName} ({address}) trong 24 giờ để xác nhận vé.</p>
                                                     </div>
-                                                </div>
-                                            ) : (
-                                                <div className="border-t border-gray-100 pt-2.5 text-[9px] text-gray-500 bg-gray-50/50 p-2 rounded-xl border border-gray-100">
-                                                    <p className="font-bold text-gray-600">📍 Hướng dẫn thanh toán:</p>
-                                                    <p className="mt-1 leading-normal">Vui lòng thanh toán trực tiếp tại văn phòng Tripeasy (Số 3 Cầu Giấy, Hà Nội) trong 24 giờ để xác nhận vé.</p>
-                                                </div>
-                                            )}
+                                                );
+                                            })()}
                                         </div>
                                     )}
 
@@ -507,6 +545,31 @@ const ChatbotWidget = () => {
                                         <span className="w-1.5 h-1.5 bg-[#8B1A1A] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
                                         <span className="w-1.5 h-1.5 bg-[#8B1A1A] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                                     </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Suggestion Bubbles */}
+                        {messages.length <= 1 && sysSettings?.chatbot?.quickQuestions && sysSettings.chatbot.quickQuestions.length > 0 && !isLoading && (
+                            <div className="flex flex-col gap-2 mt-4 px-1 pb-2">
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+                                    <Sparkles className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                                    Gợi ý nhanh cho bạn:
+                                </p>
+                                <div className="flex flex-col gap-2">
+                                    {sysSettings.chatbot.quickQuestions.map((q, idx) => (
+                                        q.trim() && (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => sendMessageText(q.trim())}
+                                                className="text-xs bg-white text-gray-700 hover:text-[#8B1A1A] hover:bg-red-50/50 border border-gray-150 hover:border-[#8B1A1A]/30 px-3.5 py-2.5 rounded-2xl transition-all duration-200 text-left shadow-sm hover:shadow-md cursor-pointer active:scale-98 flex items-center gap-2"
+                                            >
+                                                <span className="w-1.5 h-1.5 bg-[#8B1A1A] rounded-full flex-shrink-0"></span>
+                                                <span>{q.trim()}</span>
+                                            </button>
+                                        )
+                                    ))}
                                 </div>
                             </div>
                         )}

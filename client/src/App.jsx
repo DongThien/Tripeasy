@@ -13,6 +13,7 @@ const AddTour = React.lazy(() => import('./pages/admin/AddTour'));
 const AdminBookings = React.lazy(() => import('./pages/admin/AdminBookings'));
 const AdminCustomers = React.lazy(() => import('./pages/admin/AdminCustomers'));
 const AdminContacts = React.lazy(() => import('./pages/admin/AdminContacts'));
+const AdminSettings = React.lazy(() => import('./pages/admin/AdminSettings'));
 
 // Client Pages
 const ClientHome = React.lazy(() => import('./pages/client/Home'));
@@ -61,7 +62,7 @@ const App = () => (
                 <Route path="tours/add" element={<AddTour />} />
                 <Route path="bookings" element={<AdminBookings />} />
                 <Route path="customers" element={<AdminCustomers />} />
-                <Route path="settings" element={<div>Settings Page - Coming Soon</div>} />
+                <Route path="settings" element={<AdminSettings />} />
                 <Route path="contact" element={<AdminContacts />} />
             </Route>
             <Route path="/login" element={<Login />} />

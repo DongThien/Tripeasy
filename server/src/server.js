@@ -22,10 +22,16 @@ app.use('/api', routes);
 
 // Connect databases
 connectMongoDB();
-pgPool.connect().catch(err => {
-    console.error('PostgreSQL initial connection error:', err);
-    process.exit(1);
-});
+pgPool.connect()
+    .then(async () => {
+        // Nạp cấu hình động từ settings.json sau khi DB sẵn sàng
+        const { loadSettings } = await import('./services/settingService.js');
+        loadSettings();
+    })
+    .catch(err => {
+        console.error('PostgreSQL initial connection error:', err);
+        process.exit(1);
+    });
 
 // Start server
 const PORT = process.env.PORT || 5000;
