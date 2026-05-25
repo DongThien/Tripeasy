@@ -8,7 +8,8 @@ import {
 // Revenue Chart - Tổng doanh thu 6 tháng gần nhất
 export const getRevenueChart = async (req, res) => {
     try {
-        const data = await getRevenueChartData();
+        const { months } = req.query;
+        const data = await getRevenueChartData(months);
         res.json({ success: true, data, message: "Fetched revenue chart data" });
     } catch (err) {
         res.status(err.statusCode || 500).json({ success: false, data: null, message: err.message });

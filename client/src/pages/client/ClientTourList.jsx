@@ -27,6 +27,38 @@ const ClientTourList = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedSort, setSelectedSort] = useState('Phổ biến nhất');
 
+    const [user] = useState(() => {
+        const raw = localStorage.getItem('user');
+        return raw ? JSON.parse(raw) : null;
+    });
+    const userId = user ? (user.user_id || user.id) : 'guest';
+    const [favorites, setFavorites] = useState([]);
+
+    useEffect(() => {
+        const stored = localStorage.getItem(`tripeasy_favorites_${userId}`);
+        if (stored) {
+            try {
+                setFavorites(JSON.parse(stored));
+            } catch (e) {
+                console.error('Error parsing favorites:', e);
+            }
+        } else {
+            setFavorites([]);
+        }
+    }, [userId]);
+
+    const toggleFavorite = (tourId) => {
+        setFavorites((prev) => {
+            const numId = Number(tourId);
+            const updated = prev.includes(numId)
+                ? prev.filter((id) => id !== numId)
+                : [...prev, numId];
+            localStorage.setItem(`tripeasy_favorites_${userId}`, JSON.stringify(updated));
+            toast.success(prev.includes(numId) ? 'Đã bỏ ghim tour' : 'Đã ghim tour yêu thích lên đầu');
+            return updated;
+        });
+    };
+
     useEffect(() => {
         const q = searchParams.get('q') || '';
         const budget = searchParams.get('budget') || 'all';
@@ -95,25 +127,18 @@ const ClientTourList = () => {
                     return true;
                 });
 
-            // Origin filter - map origin to regions
+            // Origin filter - match by actual start_location
             const matchesOrigin = (() => {
-                if (!selectedOrigin) return true; // No filter if origin not selected
-                if (selectedOrigin === 'Hà Nội') {
-                    return ['Hạ Long', 'Sapa', 'Hà Nội', 'Quảng Ninh', 'Lào Cai', 'Đà Nẵng', 'Huế'].includes(tour.destination);
-                }
-                if (selectedOrigin === 'TP. Hồ Chí Minh') {
-                    return ['Phú Quốc', 'Cần Thơ', 'TP. Hồ Chí Minh', 'Kiên Giang', 'Đà Nẵng'].includes(tour.destination);
-                }
-                if (selectedOrigin === 'Đà Nẵng') {
-                    return ['Đà Nẵng', 'Huế', 'Hội An', 'Quảng Nam', 'Sapa', 'Hạ Long'].includes(tour.destination);
-                }
-                if (selectedOrigin === 'Hải Phòng') {
-                    return ['Hạ Long', 'Hà Nội', 'Quảng Ninh', 'Lào Cai', 'Sapa'].includes(tour.destination);
-                }
-                return true;
+                if (!selectedOrigin) return true;
+                const queryOrigin = selectedOrigin === 'TP. Hồ Chí Minh' ? 'TP.HCM' : selectedOrigin;
+                const tourStart = tour.start_location ? (tour.start_location === 'TP. Hồ Chí Minh' ? 'TP.HCM' : tour.start_location) : '';
+                return tourStart.toLowerCase() === queryOrigin.toLowerCase();
             })();
 
-            return matchesSearch && matchesPrice && matchesArea && matchesOrigin;
+            // Type/Category filter
+            const matchesType = !selectedType || tour.category === selectedType;
+
+            return matchesSearch && matchesPrice && matchesArea && matchesOrigin && matchesType;
         });
     }, [selectedAreas, selectedOrigin, selectedType, searchQuery, tours, priceRange]);
 
@@ -122,19 +147,29 @@ const ClientTourList = () => {
         setCurrentPage(1);
     }, [filteredTours.length]);
 
-    // Sort filtered tours
+    // Sort filtered tours (Favorites pinned to top)
     const sortedTours = useMemo(() => {
         const sorted = [...filteredTours];
-        if (selectedSort === 'Giá thấp đến cao') {
-            return sorted.sort((a, b) => a.price_adult - b.price_adult);
-        } else if (selectedSort === 'Giá cao đến thấp') {
-            return sorted.sort((a, b) => b.price_adult - a.price_adult);
-        } else if (selectedSort === 'Đánh giá cao nhất') {
-            return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-        }
-        // Default: Phổ biến nhất (keep original order)
+        
+        sorted.sort((a, b) => {
+            const aFav = favorites.includes(Number(a.tour_id));
+            const bFav = favorites.includes(Number(b.tour_id));
+            
+            if (aFav && !bFav) return -1;
+            if (!aFav && bFav) return 1;
+            
+            if (selectedSort === 'Giá thấp đến cao') {
+                return a.price_adult - b.price_adult;
+            } else if (selectedSort === 'Giá cao đến thấp') {
+                return b.price_adult - a.price_adult;
+            } else if (selectedSort === 'Đánh giá cao nhất') {
+                return (b.rating_avg || 0) - (a.rating_avg || 0);
+            }
+            return 0;
+        });
+        
         return sorted;
-    }, [filteredTours, selectedSort]);
+    }, [filteredTours, selectedSort, favorites]);
 
     // Paginate sorted tours
     const ITEMS_PER_PAGE = 9;
@@ -241,7 +276,11 @@ const ClientTourList = () => {
                             ) : (
                                 // Tour Grid
                                 <>
-                                    <TourListGrid tours={displayedTours} />
+                                    <TourListGrid 
+                                        tours={displayedTours} 
+                                        favorites={favorites}
+                                        onToggleFavorite={toggleFavorite}
+                                    />
                                     <TourListPagination
                                         totalTours={filteredTours.length}
                                         currentPage={currentPage}

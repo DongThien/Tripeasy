@@ -114,9 +114,7 @@ const TourFilterSidebar = ({
                             >
                                 <option value="">Tất cả</option>
                                 <option value="Hà Nội">Hà Nội</option>
-                                <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
-                                <option value="Đà Nẵng">Đà Nẵng</option>
-                                <option value="Hải Phòng">Hải Phòng</option>
+                                <option value="TP.HCM">TP.HCM</option>
                             </select>
                             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         </div>
@@ -151,7 +149,7 @@ const TourFilterSidebar = ({
                                     <button
                                         key={type}
                                         type="button"
-                                        onClick={() => onTypeChange(type)}
+                                        onClick={() => onTypeChange(active ? '' : type)}
                                         className={`rounded-full px-4 py-2 text-sm font-medium transition ${active
                                             ? 'bg-[#8B1A1A] text-white shadow-sm'
                                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'

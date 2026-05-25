@@ -19,21 +19,20 @@ const AdminDashboard = () => {
     const [recentBookings, setRecentBookings] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [chartData, setChartData] = useState([]);
+    const [selectedRange, setSelectedRange] = useState(6);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             setIsLoading(true);
             try {
-                const [statsRes, topToursRes, bookingsRes, chartRes] = await Promise.all([
+                const [statsRes, topToursRes, bookingsRes] = await Promise.all([
                     dashboardService.getOverviewStats(),
                     dashboardService.getTopTours(),
                     dashboardService.getRecentBookings(),
-                    dashboardService.getRevenueChartData(),
                 ]);
                 setStats(statsRes);
                 setTopTours(topToursRes);
                 setRecentBookings(bookingsRes);
-                setChartData(chartRes);
             } catch (err) {
                 console.error('Dashboard API error:', err);
             } finally {
@@ -42,6 +41,18 @@ const AdminDashboard = () => {
         };
         fetchDashboardData();
     }, []);
+
+    useEffect(() => {
+        const fetchChartData = async () => {
+            try {
+                const chartRes = await dashboardService.getRevenueChartData(selectedRange);
+                setChartData(chartRes);
+            } catch (err) {
+                console.error('Chart API error:', err);
+            }
+        };
+        fetchChartData();
+    }, [selectedRange]);
 
     if (isLoading) {
         return (
@@ -59,7 +70,7 @@ const AdminDashboard = () => {
             {/* Analytics & Top Tours */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    <RevenueAnalytics>
+                    <RevenueAnalytics selectedRange={selectedRange} onRangeChange={setSelectedRange}>
                         <RevenueChart data={chartData} formatVND={formatVND} />
                     </RevenueAnalytics>
                 </div>

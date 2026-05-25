@@ -27,14 +27,111 @@ function getStatusStyle(status) {
     }
 }
 
-const RecentBookingsTable = ({ bookings, formatVND }) => (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-            <div className="font-semibold text-gray-900">Recent Bookings</div>
-            <button className="bg-[#8B1A1A] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#a83232] transition">
-                Download Report
-            </button>
-        </div>
+const RecentBookingsTable = ({ bookings = [], formatVND }) => {
+    const handlePrintRecentBookings = () => {
+        if (!bookings || bookings.length === 0) {
+            alert("Không có dữ liệu đơn hàng gần đây để in!");
+            return;
+        }
+
+        const printWindow = window.open('', '_blank', 'width=1100,height=850');
+        if (!printWindow) {
+            alert("Trình duyệt chặn mở cửa sổ mới! Vui lòng cho phép pop-up.");
+            return;
+        }
+        
+        let rowsHtml = '';
+        bookings.forEach((bk, index) => {
+            rowsHtml += `
+                <tr>
+                    <td style="text-align: center; padding: 10px; border: 1px solid #ddd;">${index + 1}</td>
+                    <td style="font-weight: bold; color: #8B1A1A; padding: 10px; border: 1px solid #ddd;">#BK-${bk.id || bk.booking_id}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">
+                        <strong>${bk.customer?.name || bk.customer_name || ''}</strong>
+                    </td>
+                    <td style="padding: 10px; border: 1px solid #ddd;">${bk.tour || bk.tour_name || ''}</td>
+                    <td style="text-align: center; padding: 10px; border: 1px solid #ddd;">${formatDateVN(bk.date || bk.created_at)}</td>
+                    <td style="text-align: right; font-weight: bold; color: #8B1A1A; padding: 10px; border: 1px solid #ddd;">${formatVND(bk.amount || bk.total_price || 0)}</td>
+                    <td style="text-align: center; padding: 10px; border: 1px solid #ddd;">${(bk.status || '').toUpperCase() === 'PAID' || (bk.status || '').toUpperCase() === 'COMPLETED' ? 'Đã thanh toán' : 'Chưa thanh toán'}</td>
+                </tr>
+            `;
+        });
+
+        const printHtml = `
+            <html>
+            <head>
+                <title>Báo Cáo Đặt Tour Gần Đây - Tripeasy</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 25px; color: #333; }
+                    .header { border-bottom: 2px solid #8B1A1A; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+                    .logo { font-size: 24px; font-weight: 800; color: #8B1A1A; letter-spacing: 0.5px; }
+                    .title { font-size: 20px; font-weight: bold; text-transform: uppercase; color: #111; margin-bottom: 5px; }
+                    .meta-info { font-size: 12px; color: #666; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                    th { background-color: #f7f7f7; border: 1px solid #ddd; padding: 10px; font-size: 12px; font-weight: bold; color: #444; }
+                    td { border: 1px solid #ddd; padding: 10px; font-size: 12px; color: #333; }
+                    tr:nth-child(even) { background-color: #fafafa; }
+                    .footer { margin-top: 40px; text-align: right; font-size: 12px; color: #888; }
+                    @media print {
+                        body { padding: 10px; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="no-print" style="text-align: right; margin-bottom: 15px;">
+                    <button onclick="window.print()" style="background: #8B1A1A; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px;">In báo cáo (Print)</button>
+                </div>
+                <div class="header">
+                    <div>
+                        <div class="title">Báo Cáo Đặt Tour Gần Đây</div>
+                        <div class="meta-info">Số lượng đơn hàng: <strong>${bookings.length}</strong> &nbsp;|&nbsp; Ngày lập báo cáo: <strong>${new Date().toLocaleDateString('vi-VN')}</strong></div>
+                    </div>
+                    <div class="logo">TRIPEASY</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40px; padding: 10px; border: 1px solid #ddd;">STT</th>
+                            <th style="width: 80px; padding: 10px; border: 1px solid #ddd;">Mã Đơn</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Khách Hàng</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Tour Du Lịch</th>
+                            <th style="width: 150px; padding: 10px; border: 1px solid #ddd;">Thời Gian Đặt</th>
+                            <th style="width: 120px; text-align: right; padding: 10px; border: 1px solid #ddd;">Tổng Tiền</th>
+                            <th style="width: 120px; padding: 10px; border: 1px solid #ddd;">Thanh Toán</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+                <div class="footer">
+                    Người lập báo cáo: Ban Quản trị Tripeasy
+                </div>
+                <script>
+                    window.onload = () => {
+                        setTimeout(() => { window.print(); }, 300);
+                    };
+                </script>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.write(printHtml);
+        printWindow.document.close();
+    };
+
+    return (
+        <div className="bg-white rounded-xl shadow-sm p-6">
+            <div className="flex items-center justify-between mb-4">
+                <div className="font-semibold text-gray-900">Recent Bookings</div>
+                <button 
+                    onClick={handlePrintRecentBookings}
+                    className="bg-[#8B1A1A] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#a83232] transition"
+                >
+                    Download Report
+                </button>
+            </div>
         <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
                 <thead>
@@ -68,5 +165,6 @@ const RecentBookingsTable = ({ bookings, formatVND }) => (
         </div>
     </div>
 );
+};
 
 export default RecentBookingsTable;

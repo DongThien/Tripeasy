@@ -609,10 +609,11 @@ Nhiệm vụ của bạn là:
    - Nếu họ chưa đăng nhập, hãy lịch sự đề nghị họ nhấp vào biểu tượng "Tài khoản" ở góc trên bên phải màn hình để đăng nhập trước khi tiến hành đặt tour qua chatbot.
    - Nếu họ đã đăng nhập, hãy hỏi và xác nhận các thông tin: Ngày khởi hành (start_date), số khách người lớn (num_adults), số khách trẻ em (num_children), và hình thức thanh toán (chuyển khoản VietQR hoặc tại văn phòng).
    - Sau khi khách hàng xác nhận các thông tin trên là chính xác, hãy gọi công cụ "create_chat_booking" để tạo đơn giữ chỗ trực tiếp cho khách hàng.
-5. Khi khách hàng yêu cầu tải lịch trình, xin file lịch trình hoặc tải file PDF của một tour, hãy gọi công cụ "generate_tour_itinerary_pdf" để trả về link tải tài liệu cho họ.
+5. Khi khách hàng yêu cầu tải lịch trình, xin file lịch trình hoặc tải file PDF của một tour, hãy gọi công cụ "generate_tour_itinerary_pdf".
 6. Xưng hô thân thiện (xưng "${siteName} Bot" hoặc "mình" và gọi khách là "bạn", hoặc xưng hô theo tên nếu khách cung cấp hoặc khi gọi tool lấy được tên khách).
 
 Lưu ý quan trọng:
+- Khi dùng công cụ "generate_tour_itinerary_pdf", tuyệt đối KHÔNG tự tạo link markdown dạng [Tải PDF...] hay chèn đường dẫn URL "/api/tours/..." hoặc link "http://..." tải PDF vào tin nhắn phản hồi. Giao diện người dùng đã tự động hiển thị nút tải PDF màu đỏ ở dưới khung chat. Bạn chỉ cần trả lời lịch sự rằng file PDF lịch trình đã sẵn sàng và hướng dẫn họ nhấn vào nút tải bên dưới.
 - Tuyệt đối KHÔNG tự bịa (hallucinate) ra thông tin giá cả, lịch trình tour nếu CSDL không trả về kết quả. Nếu không tìm thấy tour phù hợp, hãy thông báo lịch sự và hướng dẫn khách tự tìm thêm ở mục "Tour du lịch" hoặc liên hệ Hotline ${hotline}.
 - Khi người dùng hỏi về đơn hàng của họ (hoặc "tôi đã đặt tour nào", "đơn hàng của tôi"), hãy gọi tool "get_user_info_and_bookings" để lấy thông tin. Tuyệt đối không bịa ra đơn hàng giả lập.
 - Chỉ trả lời các câu hỏi liên quan đến du lịch, tour tuyến, dịch vụ hỗ trợ của ${siteName}. Từ chối trả lời lịch sự các câu hỏi không liên quan (như viết code, giải bài tập...).
@@ -692,7 +693,13 @@ Lưu ý quan trọng:
             calls = response.functionCalls();
         }
 
-        const replyText = response.text();
+        let replyText = response.text();
+
+        // Post-process to remove raw markdown / URL links for PDFs if any slipped through
+        replyText = replyText.replace(/\[Tải PDF[^\]]*\]\(\/api\/tours\/\d+\/pdf\)/gi, '');
+        replyText = replyText.replace(/Bạn chỉ cần nhấp vào link để tải về nhé\./gi, '');
+        replyText = replyText.replace(/Hãy nhấp vào đường liên kết dưới đây để tải về/gi, '');
+        replyText = replyText.replace(/\n{3,}/g, '\n\n').trim();
 
         // 8. Fetch detailed tour objects for metadata if any tours or bookings were handled
         let metadata = null;

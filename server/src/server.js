@@ -2,7 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { connectMongoDB, pgPool } from './config/db.js';
+import { pgPool } from './config/db.js';
 import routes from './routes/index.js';
 
 dotenv.config();
@@ -20,8 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 // Mount routes
 app.use('/api', routes);
 
-// Connect databases
-connectMongoDB();
+// Connect database
 pgPool.connect()
     .then(async () => {
         // Nạp cấu hình động từ settings.json sau khi DB sẵn sàng

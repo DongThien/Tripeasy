@@ -14,7 +14,7 @@ const formatCurrency = (value) => {
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80";
 
-const TourListCard = ({ tour }) => {
+const TourListCard = ({ tour, isFavorite = false, onToggleFavorite }) => {
     if (!tour) return null;
 
     // Lấy ảnh an toàn
@@ -64,10 +64,20 @@ const TourListCard = ({ tour }) => {
                     )}
                     <button
                         type="button"
-                        onClick={(e) => { e.preventDefault(); /* Xử lý thả tim */ }}
-                        className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-gray-500 shadow-sm backdrop-blur transition hover:text-[#8B1A1A]"
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (onToggleFavorite) {
+                                onToggleFavorite(tour.tour_id || tour.id);
+                            }
+                        }}
+                        className={`absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition ${
+                            isFavorite 
+                                ? 'text-red-500 hover:text-red-600' 
+                                : 'text-gray-500 hover:text-[#8B1A1A]'
+                        }`}
                     >
-                        <Heart className="h-4.5 w-4.5" />
+                        <Heart className={`h-4.5 w-4.5 ${isFavorite ? 'fill-current' : ''}`} />
                     </button>
                 </div>
 

@@ -26,13 +26,3 @@ pgPool.on('error', (err) => {
   console.error('❌ Lỗi PostgreSQL Pool:', err);
   process.exit(-1);
 });
-
-// 2. Cấu hình kết nối MongoDB (Tạm thời log ra để server.js không bị lỗi)
-export const connectMongoDB = async () => {
-  try {
-    // Sau này khi setup MongoDB (cho Chatbot), bạn sẽ dùng mongoose.connect() ở đây
-    console.log('⏳ MongoDB chưa được cấu hình, tạm thời bỏ qua.');
-  } catch (error) {
-    console.error('❌ Lỗi kết nối MongoDB:', error);
-  }
-};

@@ -53,6 +53,26 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
             return Number(val).toString();
         };
 
+        const formatDate = (dateVal) => {
+            if (!dateVal) return '';
+            if (typeof dateVal === 'string') {
+                if (dateVal.includes('T')) {
+                    return dateVal.split('T')[0];
+                }
+                return dateVal;
+            }
+            try {
+                const d = new Date(dateVal);
+                if (isNaN(d.getTime())) return '';
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            } catch {
+                return '';
+            }
+        };
+
         const hydrateFromTour = (source) => {
             setFormData({
                 title: source.title || '',
@@ -69,7 +89,16 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
             });
 
             setAvailability(source.availability ?? true);
-            setDepartures(parseJSON(source.departures, [{ start_date: '', end_date: '', stock: '' }]));
+            
+            const rawDepartures = parseJSON(source.departures, []);
+            const formattedDepartures = rawDepartures.map(d => ({
+                departure_id: d.departure_id,
+                start_date: formatDate(d.start_date),
+                end_date: formatDate(d.end_date),
+                stock: d.stock !== undefined ? d.stock : ''
+            }));
+            setDepartures(formattedDepartures.length > 0 ? formattedDepartures : [{ start_date: '', end_date: '', stock: '' }]);
+
             setHighlights(parseJSON(source.highlights, [{ title: '', desc: '' }]));
             setIncluded(parseJSON(source.included, ['']));
             setExcluded(parseJSON(source.excluded, ['']));
@@ -87,14 +116,17 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
         };
 
         const loadDetails = async () => {
-            hydrateFromTour(tourData);
             try {
-                const res = await axiosClient.get(`/tours/${tourData.tour_id}/images`);
+                // Tải thông tin chi tiết đầy đủ của tour bao gồm cả ảnh và lịch trình khởi hành
+                const res = await axiosClient.get(`/tours/${tourData.tour_id}`);
                 if (isActive && res.data?.success) {
-                    setExistingImages((res.data.data || []).filter(Boolean));
+                    hydrateFromTour(res.data.data);
+                } else {
+                    hydrateFromTour(tourData);
                 }
-            } catch {
-                // Fallback to data already in tourData
+            } catch (err) {
+                console.error("❌ Lỗi khi tải chi tiết tour:", err);
+                hydrateFromTour(tourData);
             }
         };
 
@@ -205,6 +237,15 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
             };
 
             // Đóng gói JSON Payload
+            const cleanedDepartures = departures
+                .filter(d => d.start_date && d.end_date)
+                .map(d => ({
+                    start_date: d.start_date,
+                    end_date: d.end_date,
+                    stock: d.stock !== null && d.stock !== undefined && d.stock !== '' ? parseInt(d.stock) : 20,
+                    status: d.status || 'AVAILABLE'
+                }));
+
             const payload = {
                 ...formData,
                 max_guests: cleanNum(formData.max_guests),
@@ -212,7 +253,7 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
                 price_child: cleanNum(formData.price_child),
                 old_price: cleanNum(formData.old_price),
                 availability: availability,
-                departures: JSON.stringify(departures.filter(d => d.start_date && d.end_date)),
+                departures: JSON.stringify(cleanedDepartures),
                 highlights: JSON.stringify(highlights.filter(h => h.title)),
                 included: JSON.stringify(included.filter(i => i.trim() !== '')),
                 excluded: JSON.stringify(excluded.filter(i => i.trim() !== '')),

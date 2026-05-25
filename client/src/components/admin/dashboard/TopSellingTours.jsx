@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 
 const TopSellingTours = ({ tours }) => (
@@ -16,9 +17,11 @@ const TopSellingTours = ({ tours }) => (
                 </div>
             ))}
         </div>
-        <button className="mt-6 bg-[#8B1A1A] text-white font-semibold rounded-full py-2 w-full hover:bg-[#a83232] transition">
-            View All Tours
-        </button>
+        <Link to="/admin/tours" className="block w-full">
+            <button className="mt-6 bg-[#8B1A1A] text-white font-semibold rounded-full py-2 w-full hover:bg-[#a83232] transition">
+                View All Tours
+            </button>
+        </Link>
     </div>
 );
 

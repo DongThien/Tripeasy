@@ -488,6 +488,7 @@ export const exportTourItineraryPDF = async (req, res) => {
         doc.fillColor('#1f2937');
         doc.text(tour.transport || 'N/A', 420, infoY + 20);
 
+        doc.x = 50; // Reset X coordinate to default margin to prevent inheritance of 420
         doc.moveDown(5.5); // Chừa không gian cho khung thông tin phía trên
 
         // Điểm nhấn hành trình

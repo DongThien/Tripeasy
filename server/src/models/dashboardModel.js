@@ -1,6 +1,7 @@
 import { pgPool } from "../config/db.js";
 
-export const fetchRevenueChartRows = async () => {
+export const fetchRevenueChartRows = async (months) => {
+    const intervalVal = (Number(months) - 1) || 5;
     const query = `
         SELECT 
             TO_CHAR(DATE_TRUNC('month', booking_date), 'MM/YYYY') AS month,
@@ -8,8 +9,8 @@ export const fetchRevenueChartRows = async () => {
             EXTRACT(YEAR FROM booking_date) AS year_num,
             SUM(total_price) AS total
         FROM bookings
-        WHERE payment_status = 'COMPLETED'
-            AND booking_date >= (DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months')
+        WHERE payment_status IN ('PAID', 'COMPLETED')
+            AND booking_date >= (DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '${intervalVal} months')
         GROUP BY month, month_num, year_num
         ORDER BY year_num ASC, month_num ASC
     `;
@@ -19,7 +20,7 @@ export const fetchRevenueChartRows = async () => {
 
 export const fetchTotalRevenueRow = async () => {
     const { rows } = await pgPool.query(
-        "SELECT COALESCE(SUM(total_price),0) AS total_revenue FROM bookings WHERE payment_status = 'COMPLETED'"
+        "SELECT COALESCE(SUM(total_price),0) AS total_revenue FROM bookings WHERE payment_status IN ('PAID', 'COMPLETED')"
     );
     return rows[0];
 };
@@ -47,7 +48,7 @@ export const fetchTopToursRows = async () => {
                COALESCE(i.image_url, '') AS img,
                COUNT(b.booking_id) AS sold
         FROM tours t
-        LEFT JOIN bookings b ON t.tour_id = b.tour_id AND b.payment_status = 'COMPLETED'
+        LEFT JOIN bookings b ON t.tour_id = b.tour_id AND b.payment_status IN ('PAID', 'COMPLETED')
         LEFT JOIN images i ON t.tour_id = i.tour_id
         GROUP BY t.tour_id, t.title, t.destination, i.image_url
         ORDER BY sold DESC

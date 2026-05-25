@@ -1,17 +1,8 @@
 import React from 'react';
 import { ChevronDown } from 'lucide-react';
 
-const TourListTopBar = ({ totalTours = 0, selectedSort = 'Phổ biến nhất', onSortChange = () => { } }) => (
-    <div className="mb-6 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100 md:flex-row md:items-center md:justify-between">
-        <div>
-            <h2 className="text-lg font-bold text-gray-900 md:text-xl">
-                Tìm thấy <span className="text-[#8B1A1A]">{totalTours}</span> tour phù hợp
-            </h2>
-            <p className="mt-1 text-sm text-gray-500">
-                Kết quả gợi ý theo điểm đến, ngân sách và phong cách du lịch.
-            </p>
-        </div>
-
+const TourListTopBar = ({ selectedSort = 'Phổ biến nhất', onSortChange = () => { } }) => (
+    <div className="mb-6 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100 md:flex-row md:justify-end">
         <div className="relative w-full md:w-64">
             <select
                 value={selectedSort}

@@ -111,8 +111,17 @@ const AddTour = () => {
             });
 
             // Parse Mảng dữ liệu thành JSON String trước khi gửi xuống DB
+            const cleanedDepartures = departures
+                .filter(d => d.start_date && d.end_date)
+                .map(d => ({
+                    start_date: d.start_date,
+                    end_date: d.end_date,
+                    stock: d.stock !== null && d.stock !== undefined && d.stock !== '' ? parseInt(d.stock) : 20,
+                    status: d.status || 'AVAILABLE'
+                }));
+
             formDataToSend.append('itinerary', JSON.stringify(itinerary));
-            formDataToSend.append('departures', JSON.stringify(departures.filter(d => d.start_date && d.end_date)));
+            formDataToSend.append('departures', JSON.stringify(cleanedDepartures));
             formDataToSend.append('highlights', JSON.stringify(highlights.filter(h => h.title)));
             formDataToSend.append('included', JSON.stringify(included.filter(i => i.trim() !== '')));
             formDataToSend.append('excluded', JSON.stringify(excluded.filter(e => e.trim() !== '')));

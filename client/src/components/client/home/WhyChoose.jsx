@@ -27,13 +27,11 @@ const WhyChoose = () => (
         <div className="absolute inset-x-6 -top-10 h-40 rounded-[32px] bg-gradient-to-r from-[#fdf2f2] via-[#fff7f0] to-[#f3f7ff] blur-2xl opacity-70" />
         <div className="relative flex flex-col items-center mb-12">
             <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#8B1A1A]/10">
-                    <Sparkles className="h-5 w-5 text-[#8B1A1A]" />
-                </span>
-                <h2 className="text-3xl md:text-5xl font-extrabold text-center text-gray-900">
-                    Vì sao chọn Tripeasy
+                <h2 className="text-2xl md:text-3xl font-extrabold text-center text-gray-900">
+                    Vì sao nên chọn Tripeasy
                 </h2>
             </div>
+            <span className="block h-1 w-16 bg-[#8B1A1A] rounded mt-4" />
             <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm font-semibold text-gray-500">
                 <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 shadow-sm">
                     <MapPinned className="h-4 w-4 text-[#8B1A1A]" />
