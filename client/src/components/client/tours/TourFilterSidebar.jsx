@@ -12,6 +12,8 @@ const TourFilterSidebar = ({
     onPriceChange,
     selectedType,
     onTypeChange,
+    selectedRating,
+    onRatingChange,
     onClearFilters,
 }) => {
     // Format currency for display
@@ -165,24 +167,34 @@ const TourFilterSidebar = ({
                     {/* Rating */}
                     <div>
                         <h3 className="mb-3 font-semibold text-gray-900">Đánh giá</h3>
-                        <div className="space-y-2 text-sm text-gray-600">
-                            {['5 sao', '4 sao trở lên', '3 sao trở lên'].map((label, index) => (
-                                <label key={label} className="flex cursor-pointer items-center gap-3">
+                        <div className="space-y-2.5 text-sm text-gray-600">
+                            {[
+                                { value: '', label: 'Tất cả' },
+                                { value: '5', label: '5 sao', stars: 5 },
+                                { value: '4', label: 'Từ 4 sao trở lên', stars: 4 },
+                                { value: '3', label: 'Từ 3 sao trở lên', stars: 3 }
+                            ].map((opt) => (
+                                <label key={opt.value} className="flex cursor-pointer items-center gap-3">
                                     <input
                                         type="radio"
-                                        name="rating"
-                                        defaultChecked={index === 0}
+                                        name="ratingFilter"
+                                        value={opt.value}
+                                        checked={selectedRating === opt.value}
+                                        onChange={() => onRatingChange(opt.value)}
                                         className="h-4 w-4 border-gray-300 text-[#8B1A1A] focus:ring-[#8B1A1A]"
                                     />
-                                    <span className="inline-flex items-center gap-1">
-                                        <span className="inline-flex text-yellow-400">
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                            <Star className="h-4 w-4 fill-current" />
-                                        </span>
-                                        {label}
+                                    <span className="inline-flex items-center">
+                                        {opt.stars > 0 && (
+                                            <span className="inline-flex text-yellow-400 mr-2">
+                                                {[...Array(5)].map((_, i) => (
+                                                    <Star
+                                                        key={i}
+                                                        className={`h-3.5 w-3.5 ${i < opt.stars ? 'fill-current text-yellow-400' : 'text-gray-200'}`}
+                                                    />
+                                                ))}
+                                            </span>
+                                        )}
+                                        <span className="font-medium text-gray-700">{opt.label}</span>
                                     </span>
                                 </label>
                             ))}

@@ -11,6 +11,7 @@ import TourDetailItinerary from '../../components/client/tourDetail/TourDetailIt
 import TourDetailServices from '../../components/client/tourDetail/TourDetailServices';
 import TourDetailPolicies from '../../components/client/tourDetail/TourDetailPolicies';
 import TourDetailRelated from '../../components/client/tourDetail/TourDetailRelated';
+import TourDetailReviews from '../../components/client/tourDetail/TourDetailReviews';
 
 const TourDetail = () => {
     const { id } = useParams();
@@ -21,7 +22,8 @@ const TourDetail = () => {
         highlights: useRef(null),
         itinerary: useRef(null),
         services: useRef(null),
-        policies: useRef(null)
+        policies: useRef(null),
+        reviews: useRef(null)
     };
 
     useEffect(() => {
@@ -79,12 +81,14 @@ const TourDetail = () => {
                             <button onClick={() => scrollToSection('itinerary')} className="px-6 py-3 text-base font-bold text-gray-600 hover:text-[#8B1A1A] transition-colors whitespace-nowrap">Lịch trình</button>
                             <button onClick={() => scrollToSection('services')} className="px-6 py-3 text-base font-bold text-gray-600 hover:text-[#8B1A1A] transition-colors whitespace-nowrap">Dịch vụ</button>
                             <button onClick={() => scrollToSection('policies')} className="px-6 py-3 text-base font-bold text-gray-600 hover:text-[#8B1A1A] transition-colors whitespace-nowrap">Chính sách</button>
+                            <button onClick={() => scrollToSection('reviews')} className="px-6 py-3 text-base font-bold text-gray-600 hover:text-[#8B1A1A] transition-colors whitespace-nowrap">Đánh giá</button>
                         </div>
 
                         <section ref={sectionRefs.highlights} className="scroll-mt-40"><TourDetailHighlights highlights={ensureArray(tour.highlights)} /></section>
                         <section ref={sectionRefs.itinerary} className="scroll-mt-40"><TourDetailItinerary itinerary={ensureArray(tour.itinerary)} /></section>
                         <section ref={sectionRefs.services} className="scroll-mt-40"><TourDetailServices included={ensureArray(tour.included)} excluded={ensureArray(tour.excluded)} /></section>
                         <section ref={sectionRefs.policies} className="scroll-mt-40"><TourDetailPolicies tour={tour} /></section>
+                        <section ref={sectionRefs.reviews} className="scroll-mt-40"><TourDetailReviews tourId={tour.tour_id} /></section>
                     </div>
 
                     {/* CỘT PHẢI (Sidebar): Giữ tỷ lệ vừa phải (28%) để không bị phình to */}

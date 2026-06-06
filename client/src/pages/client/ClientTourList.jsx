@@ -24,6 +24,7 @@ const ClientTourList = () => {
     const [selectedAreas, setSelectedAreas] = useState([]); // Empty by default to show all tours
     const [priceRange, setPriceRange] = useState([0, 10000000]);
     const [selectedType, setSelectedType] = useState('');
+    const [selectedRating, setSelectedRating] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedSort, setSelectedSort] = useState('Phổ biến nhất');
 
@@ -138,9 +139,16 @@ const ClientTourList = () => {
             // Type/Category filter
             const matchesType = !selectedType || tour.category === selectedType;
 
-            return matchesSearch && matchesPrice && matchesArea && matchesOrigin && matchesType;
+            // Rating filter
+            const matchesRating = (() => {
+                if (!selectedRating) return true;
+                const targetRating = Number(selectedRating);
+                return (tour.rating_avg || 0) >= targetRating;
+            })();
+
+            return matchesSearch && matchesPrice && matchesArea && matchesOrigin && matchesType && matchesRating;
         });
-    }, [selectedAreas, selectedOrigin, selectedType, searchQuery, tours, priceRange]);
+    }, [selectedAreas, selectedOrigin, selectedType, selectedRating, searchQuery, tours, priceRange]);
 
     // Reset to page 1 when filters change
     useEffect(() => {
@@ -196,6 +204,7 @@ const ClientTourList = () => {
         setSelectedAreas([]); // Clear areas filter to show all tours
         setPriceRange([0, 10000000]);
         setSelectedType('');
+        setSelectedRating('');
         setSelectedSort('Phổ biến nhất'); // Reset sort to default
         setCurrentPage(1);
     };
@@ -220,6 +229,8 @@ const ClientTourList = () => {
                             onPriceChange={handlePriceChange}
                             selectedType={selectedType}
                             onTypeChange={setSelectedType}
+                            selectedRating={selectedRating}
+                            onRatingChange={setSelectedRating}
                             onClearFilters={handleClearFilters}
                         />
 

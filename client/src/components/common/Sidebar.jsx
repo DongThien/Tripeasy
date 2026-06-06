@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Map, Ticket, Users, Settings, Phone, ChevronDown, Plus, List } from "lucide-react";
+import { LayoutDashboard, Map, Ticket, Users, Settings, Phone, ChevronDown, Plus, List, Star } from "lucide-react";
 
 const menu = [
     { label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" />, active: true },
@@ -101,6 +101,15 @@ const Sidebar = () => {
                         >
                             <Users className="w-5 h-5" />
                             <span>Khách hàng</span>
+                        </Link>
+                    </li>
+                    <li>
+                        <Link
+                            to="/admin/reviews"
+                            className={`flex items-center gap-3 px-4 py-2 rounded-lg transition ${location.pathname === "/admin/reviews" ? "bg-red-50 text-[#8B1A1A] font-semibold" : "text-gray-500 hover:bg-gray-100"}`}
+                        >
+                            <Star className="w-5 h-5" />
+                            <span>Đánh giá</span>
                         </Link>
                     </li>
                     <li>
