@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Bot, Sparkles, SendHorizontal } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, Sparkles, SendHorizontal, MapPin, Navigation } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import chatService from '../../../services/chatService';
 import settingService from '../../../services/settingService';
@@ -509,6 +509,40 @@ const ChatbotWidget = () => {
                                                     </div>
                                                 );
                                             })()}
+                                        </div>
+                                    )}
+
+                                    {/* Google Maps Directions Card */}
+                                    {msg.role === 'model' && msg.metadata && msg.metadata.map && (
+                                        <div className="mt-2.5 bg-white p-3 rounded-2xl border border-gray-150 shadow-sm space-y-2.5 overflow-hidden animate-in fade-in duration-300">
+                                            <div className="flex items-center gap-1.5 border-b border-gray-100 pb-2">
+                                                <span className="inline-flex h-5 w-5 items-center justify-center rounded-lg bg-[#8B1A1A]/10 text-[#8B1A1A]">
+                                                    <MapPin className="h-3.5 w-3.5" />
+                                                </span>
+                                                <span className="text-[10px] font-bold text-gray-800">
+                                                    Bản đồ văn phòng Tripeasy
+                                                </span>
+                                            </div>
+                                            <div className="h-28 w-full rounded-xl overflow-hidden border border-gray-100">
+                                                <iframe
+                                                    title="Bản đồ văn phòng"
+                                                    src={`https://maps.google.com/maps?q=${encodeURIComponent(msg.metadata.map.address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                                                    className="w-full h-full border-0 grayscale-[10%]"
+                                                    allowFullScreen=""
+                                                    loading="lazy"
+                                                />
+                                            </div>
+                                            <div className="text-[9px] text-gray-500 space-y-1">
+                                                <p><strong className="text-gray-800">Địa chỉ:</strong> {msg.metadata.map.address}</p>
+                                                <a
+                                                    href={msg.metadata.map.directions_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="inline-flex items-center gap-1 text-[#8B1A1A] hover:underline font-bold"
+                                                >
+                                                    <Navigation className="w-2.5 h-2.5" /> Chỉ đường đi trên Google Maps
+                                                </a>
+                                            </div>
                                         </div>
                                     )}
 

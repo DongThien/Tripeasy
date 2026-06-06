@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { pgPool } from '../config/db.js';
 import { generateEmbedding, cosineSimilarity } from '../services/geminiService.js';
 import { getSetting } from '../services/settingService.js';
+import { createContactData } from '../services/contactService.js';
 
 /**
  * Helper to resolve or create a chat session
@@ -363,6 +364,20 @@ const executeGenerateTourItineraryPDF = async (args) => {
 };
 
 /**
+ * Execute office location retrieval
+ */
+const executeGetOfficeLocation = async () => {
+    const address = getSetting('general.address') || "Số 3 đường Cầu Giấy, phường Láng Thượng, quận Đống Đa, Hà Nội";
+    const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+    return {
+        success: true,
+        address,
+        directions_url: directionsUrl,
+        message: `Đã truy xuất địa chỉ văn phòng: "${address}". Hãy hướng dẫn khách hàng xem bản đồ hướng dẫn đường đi hiển thị bên dưới.`
+    };
+};
+
+/**
  * Fetch detailed info of recommended tours to attach to message metadata
  */
 const getMetadataTours = async (tourIds) => {
@@ -593,6 +608,44 @@ export const handleChat = async (req, res) => {
                             },
                             required: ['tour_id']
                         }
+                    },
+                    {
+                        name: 'submit_contact_message',
+                        description: 'Gửi phản hồi liên hệ, tin nhắn yêu cầu hỗ trợ hoặc tư vấn từ khách hàng tới ban quản trị và tự động gửi email thông báo cho Admin.',
+                        parameters: {
+                            type: 'OBJECT',
+                            properties: {
+                                fullName: {
+                                    type: 'STRING',
+                                    description: 'Họ và tên đầy đủ của khách hàng, ví dụ: "Nguyễn Văn A"'
+                                },
+                                phone: {
+                                    type: 'STRING',
+                                    description: 'Số điện thoại liên hệ của khách hàng, ví dụ: "0912345678" (tùy chọn)'
+                                },
+                                email: {
+                                    type: 'STRING',
+                                    description: 'Địa chỉ Email của khách hàng để nhận phản hồi hỗ trợ, ví dụ: "customer@gmail.com"'
+                                },
+                                subject: {
+                                    type: 'STRING',
+                                    description: 'Chủ đề liên hệ hoặc yêu cầu hỗ trợ. Mặc định: "Liên hệ qua Chatbot AI".'
+                                },
+                                message: {
+                                    type: 'STRING',
+                                    description: 'Nội dung chi tiết lời nhắn, phản hồi hoặc yêu cầu của khách hàng.'
+                                }
+                            },
+                            required: ['fullName', 'email', 'message']
+                        }
+                    },
+                    {
+                        name: 'get_office_location',
+                        description: 'Truy xuất địa chỉ văn phòng đại diện của Tripeasy và liên kết chỉ đường Google Maps.',
+                        parameters: {
+                            type: 'OBJECT',
+                            properties: {}
+                        }
                     }
                 ]
             }],
@@ -610,7 +663,11 @@ Nhiệm vụ của bạn là:
    - Nếu họ đã đăng nhập, hãy hỏi và xác nhận các thông tin: Ngày khởi hành (start_date), số khách người lớn (num_adults), số khách trẻ em (num_children), và hình thức thanh toán (chuyển khoản VietQR hoặc tại văn phòng).
    - Sau khi khách hàng xác nhận các thông tin trên là chính xác, hãy gọi công cụ "create_chat_booking" để tạo đơn giữ chỗ trực tiếp cho khách hàng.
 5. Khi khách hàng yêu cầu tải lịch trình, xin file lịch trình hoặc tải file PDF của một tour, hãy gọi công cụ "generate_tour_itinerary_pdf".
-6. Xưng hô thân thiện (xưng "${siteName} Bot" hoặc "mình" và gọi khách là "bạn", hoặc xưng hô theo tên nếu khách cung cấp hoặc khi gọi tool lấy được tên khách).
+6. Khi khách hàng muốn gửi tin nhắn liên hệ, phản hồi, để lại lời nhắn hoặc gửi email yêu cầu tư vấn cho ban quản lý:
+   - Hãy thu thập đủ thông tin: Họ và tên (fullName), Email (email), Số điện thoại (phone - không bắt buộc), và Nội dung phản hồi (message). Sau đó gọi công cụ "submit_contact_message".
+7. Khi khách hàng hỏi địa chỉ văn phòng ở đâu, xin bản đồ chỉ đường, hoặc hỏi đường đi đến cơ sở của Tripeasy:
+   - Gọi công cụ "get_office_location". Bạn chỉ cần giải thích địa chỉ văn phòng một cách thân thiện và hướng dẫn khách xem bản đồ IFrame cùng chỉ đường hiển thị ngay bên dưới tin nhắn.
+8. Xưng hô thân thiện (xưng "${siteName} Bot" hoặc "mình" và gọi khách là "bạn", hoặc xưng hô theo tên nếu khách cung cấp hoặc khi gọi tool lấy được tên khách).
 
 Lưu ý quan trọng:
 - Khi dùng công cụ "generate_tour_itinerary_pdf", tuyệt đối KHÔNG tự tạo link markdown dạng [Tải PDF...] hay chèn đường dẫn URL "/api/tours/..." hoặc link "http://..." tải PDF vào tin nhắn phản hồi. Giao diện người dùng đã tự động hiển thị nút tải PDF màu đỏ ở dưới khung chat. Bạn chỉ cần trả lời lịch sự rằng file PDF lịch trình đã sẵn sàng và hướng dẫn họ nhấn vào nút tải bên dưới.
@@ -635,6 +692,7 @@ Lưu ý quan trọng:
         const recommendedTourIds = new Set();
         let bookingMetadata = null;
         let pdfMetadata = null;
+        let mapMetadata = null;
 
         // 7. Loop handling function calls (if requested by Gemini)
         let loops = 0;
@@ -671,6 +729,22 @@ Lưu ý quan trọng:
                             pdfMetadata = pdfResult;
                         }
                         functionResult = pdfResult;
+                    } else if (name === 'submit_contact_message') {
+                        const contactPayload = {
+                            fullName: args.fullName,
+                            phone: args.phone || '',
+                            email: args.email,
+                            subject: args.subject || 'Liên hệ từ Chatbot AI',
+                            message: args.message
+                        };
+                        const contactResult = await createContactData(contactPayload);
+                        functionResult = { success: true, message: "Đã gửi liên hệ hỗ trợ cho Admin thành công!", data: contactResult };
+                    } else if (name === 'get_office_location') {
+                        const officeLocation = await executeGetOfficeLocation();
+                        if (officeLocation.success) {
+                            mapMetadata = officeLocation;
+                        }
+                        functionResult = officeLocation;
                     } else {
                         functionResult = { error: `Function ${name} not found` };
                     }
@@ -703,7 +777,7 @@ Lưu ý quan trọng:
 
         // 8. Fetch detailed tour objects for metadata if any tours or bookings were handled
         let metadata = null;
-        if (recommendedTourIds.size > 0 || bookingMetadata || pdfMetadata) {
+        if (recommendedTourIds.size > 0 || bookingMetadata || pdfMetadata || mapMetadata) {
             metadata = {};
             if (recommendedTourIds.size > 0) {
                 metadata.tours = await getMetadataTours(Array.from(recommendedTourIds));
@@ -713,6 +787,9 @@ Lưu ý quan trọng:
             }
             if (pdfMetadata) {
                 metadata.pdf = pdfMetadata;
+            }
+            if (mapMetadata) {
+                metadata.map = mapMetadata;
             }
         }
 

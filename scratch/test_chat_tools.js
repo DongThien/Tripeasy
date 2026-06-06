@@ -19,7 +19,7 @@ async function runTest() {
 
         const mockReq = {
             body: {
-                message: 'Tôi đã đặt những tour nào vậy?',
+                message: 'Chỉ đường đi đến văn phòng Tripeasy cho tôi với',
                 sessionId: 'test-session-uuid-1234'
             },
             user: { id: user.user_id }
