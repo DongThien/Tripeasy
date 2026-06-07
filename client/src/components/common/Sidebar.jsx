@@ -43,11 +43,11 @@ const Sidebar = () => {
     }, [user]);
     return (
         <aside className="w-64 h-screen bg-white border-r flex flex-col fixed left-0 top-0 z-20">
-            <Link to="/client" className="flex items-center gap-2.5 px-6 py-5 border-b border-gray-100 hover:bg-gray-50/50 transition group select-none">
-                <MapPin className="w-7 h-7 text-[#8B1A1A] group-hover:scale-110 transition-transform duration-200" />
+            <Link to="/client" className="flex items-center gap-3 px-6 py-6 border-b border-gray-100 hover:bg-gray-50/50 transition group select-none">
+                <MapPin className="w-9 h-9 text-[#8B1A1A] group-hover:scale-110 transition-transform duration-200" />
                 <div className="flex flex-col">
-                    <span className="font-black text-xl tracking-tight text-[#8B1A1A]">Tripeasy</span>
-                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider -mt-1.5 font-mono">Admin Panel</span>
+                    <span className="font-black text-2xl tracking-tight text-[#8B1A1A]">Tripeasy</span>
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-widest -mt-1 font-sans">Admin</span>
                 </div>
             </Link>
             <nav className="flex-1 px-2">
