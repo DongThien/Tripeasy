@@ -14,7 +14,9 @@ import {
     toggleUserLockRow,
     savePasswordResetTokenRow,
     fetchUserByResetTokenRow,
-    updateUserPasswordRow
+    updateUserPasswordRow,
+    fetchUserPasswordRow,
+    deleteUserRow
 } from "../models/userModel.js";
 
 // Cấu hình Mailer bảo mật thông qua biến môi trường (.env)
@@ -248,4 +250,37 @@ export const resetPasswordData = async (token, newPassword) => {
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await updateUserPasswordRow(user.user_id, passwordHash);
     return "Đặt lại mật khẩu mới thành công!";
+};
+
+export const changePasswordData = async (userId, currentPassword, newPassword) => {
+    if (!currentPassword || !newPassword) {
+        const error = new Error("Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới");
+        error.statusCode = 400;
+        throw error;
+    }
+    const user = await fetchUserPasswordRow(userId);
+    if (!user) {
+        const error = new Error("Không tìm thấy người dùng");
+        error.statusCode = 404;
+        throw error;
+    }
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+        const error = new Error("Mật khẩu hiện tại không chính xác");
+        error.statusCode = 400;
+        throw error;
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await updateUserPasswordRow(userId, passwordHash);
+    return "Đổi mật khẩu thành công!";
+};
+
+export const deleteUserData = async (userId) => {
+    const deletedUser = await deleteUserRow(userId);
+    if (!deletedUser) {
+        const error = new Error("Không tìm thấy tài khoản");
+        error.statusCode = 404;
+        throw error;
+    }
+    return "Xóa tài khoản thành công!";
 };

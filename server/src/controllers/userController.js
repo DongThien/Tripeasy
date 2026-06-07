@@ -7,7 +7,9 @@ import {
     updateUserData,
     toggleUserLockData,
     forgotPasswordData,
-    resetPasswordData
+    resetPasswordData,
+    changePasswordData,
+    deleteUserData
 } from "../services/userService.js";
 
 export const register = async (req, res) => {
@@ -69,6 +71,9 @@ export const getUserStats = async (req, res) => {
 export const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
+        if (req.user.id !== Number(id) && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: "Bạn không có quyền thực hiện thao tác này" });
+        }
         const data = await updateUserData(id, req.body);
         res.json({ success: true, data, message: "User updated" });
     } catch (err) {
@@ -104,5 +109,32 @@ export const resetPassword = async (req, res) => {
     } catch (err) {
         console.error("Reset password error:", err.original || err);
         res.status(err.statusCode || 500).json({ success: false, data: null, message: err.message });
+    }
+};
+
+export const changePassword = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { currentPassword, newPassword } = req.body;
+        if (req.user.id !== Number(id) && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: "Bạn không có quyền thực hiện thao tác này" });
+        }
+        const message = await changePasswordData(id, currentPassword, newPassword);
+        res.json({ success: true, message });
+    } catch (err) {
+        res.status(err.statusCode || 500).json({ success: false, message: err.message });
+    }
+};
+
+export const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (req.user.id !== Number(id) && req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: "Bạn không có quyền thực hiện thao tác này" });
+        }
+        const message = await deleteUserData(id);
+        res.json({ success: true, message });
+    } catch (err) {
+        res.status(err.statusCode || 500).json({ success: false, message: err.message });
     }
 };

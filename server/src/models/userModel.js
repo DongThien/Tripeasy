@@ -152,3 +152,31 @@ export const updateUserPasswordRow = async (userId, newPasswordHash) => {
     );
     return rows[0];
 };
+
+export const fetchUserPasswordRow = async (userId) => {
+    const { rows } = await pgPool.query("SELECT password FROM users WHERE user_id = $1", [userId]);
+    return rows[0];
+};
+
+export const deleteUserRow = async (userId) => {
+    const client = await pgPool.connect();
+    try {
+        await client.query("BEGIN");
+        await client.query("DELETE FROM invoices WHERE booking_id IN (SELECT booking_id FROM bookings WHERE user_id = $1)", [userId]);
+        await client.query("DELETE FROM checkouts WHERE booking_id IN (SELECT booking_id FROM bookings WHERE user_id = $1)", [userId]);
+        await client.query("DELETE FROM bookings WHERE user_id = $1", [userId]);
+        await client.query("DELETE FROM reviews WHERE user_id = $1", [userId]);
+        await client.query("DELETE FROM history WHERE user_id = $1", [userId]);
+        await client.query("DELETE FROM chat_messages WHERE session_id IN (SELECT session_id FROM chat_sessions WHERE user_id = $1)", [userId]);
+        await client.query("DELETE FROM chat_sessions WHERE user_id = $1", [userId]);
+        await client.query("DELETE FROM chats WHERE user_id = $1 OR support_id = $1", [userId]);
+        const { rows } = await client.query("DELETE FROM users WHERE user_id = $1 RETURNING user_id", [userId]);
+        await client.query("COMMIT");
+        return rows[0];
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};

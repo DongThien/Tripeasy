@@ -13,6 +13,8 @@ router.post("/reset-password", userController.resetPassword);
 // --- LUỒNG ĐĂNG NHẬP THƯỜNG (Yêu cầu Token cá nhân) ---
 router.get("/me", verifyToken, userController.getCurrentUser);
 router.put("/:id", verifyToken, userController.updateUser);
+router.put("/:id/change-password", verifyToken, userController.changePassword);
+router.delete("/:id", verifyToken, userController.deleteUser);
 
 // --- LUỒNG QUẢN TRỊ VIÊN (Yêu cầu Token & quyền Admin) ---
 router.get("/stats", verifyAdmin, userController.getUserStats);
