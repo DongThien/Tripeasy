@@ -2,7 +2,9 @@ import {
     getRevenueChartData,
     getDashboardStatsData,
     getTopToursData,
-    getRecentBookingsData
+    getRecentBookingsData,
+    getGlobalSearchData,
+    getNotificationsData
 } from "../services/dashboardService.js";
 
 // Revenue Chart - Tổng doanh thu theo khoảng ngày
@@ -54,6 +56,30 @@ export const getRecentBookings = async (req, res) => {
     try {
         const data = await getRecentBookingsData();
         res.json({ success: true, data, message: "Fetched recent bookings" });
+    } catch (err) {
+        res.status(err.statusCode || 500).json({ success: false, data: null, message: err.message });
+    }
+};
+
+// Global Search
+export const getGlobalSearch = async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q) {
+            return res.json({ success: true, data: { tours: [], bookings: [], customers: [] } });
+        }
+        const data = await getGlobalSearchData(q);
+        res.json({ success: true, data, message: "Fetched global search results" });
+    } catch (err) {
+        res.status(err.statusCode || 500).json({ success: false, data: null, message: err.message });
+    }
+};
+
+// Dashboard Notifications
+export const getNotifications = async (req, res) => {
+    try {
+        const data = await getNotificationsData();
+        res.json({ success: true, data, message: "Fetched dashboard notifications" });
     } catch (err) {
         res.status(err.statusCode || 500).json({ success: false, data: null, message: err.message });
     }

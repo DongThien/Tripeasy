@@ -5,7 +5,9 @@ import {
     fetchTotalUsersRow,
     fetchNewBookingsRow,
     fetchTopToursRows,
-    fetchRecentBookingsRows
+    fetchRecentBookingsRows,
+    fetchGlobalSearchResults,
+    fetchNotificationsData
 } from "../models/dashboardModel.js";
 
 export const getRevenueChartData = async (startDate, endDate) => {
@@ -49,4 +51,12 @@ export const getRecentBookingsData = async () => {
         },
         tour: b.tour_name
     }));
+};
+
+export const getGlobalSearchData = async (q) => {
+    return fetchGlobalSearchResults(q);
+};
+
+export const getNotificationsData = async () => {
+    return fetchNotificationsData();
 };

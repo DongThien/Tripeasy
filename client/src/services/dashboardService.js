@@ -21,11 +21,25 @@ export const getRecentBookings = async () => {
     return res.data.data;
 };
 
+export const globalSearch = async (q) => {
+    const res = await axiosClient.get("/dashboard/search", {
+        params: { q }
+    });
+    return res.data.data;
+};
+
+export const getNotifications = async () => {
+    const res = await axiosClient.get("/dashboard/notifications");
+    return res.data.data;
+};
+
 const dashboardService = {
     getOverviewStats,
     getTopTours,
     getRecentBookings,
     getRevenueChartData,
+    globalSearch,
+    getNotifications
 };
 
 export default dashboardService;
