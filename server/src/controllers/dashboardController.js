@@ -5,11 +5,21 @@ import {
     getRecentBookingsData
 } from "../services/dashboardService.js";
 
-// Revenue Chart - Tổng doanh thu 6 tháng gần nhất
+// Revenue Chart - Tổng doanh thu theo khoảng ngày
 export const getRevenueChart = async (req, res) => {
     try {
-        const { months } = req.query;
-        const data = await getRevenueChartData(months);
+        const { startDate, endDate } = req.query;
+        let start = startDate;
+        let end = endDate;
+        if (!end) {
+            end = new Date().toISOString().split('T')[0];
+        }
+        if (!start) {
+            const startDateObj = new Date();
+            startDateObj.setDate(startDateObj.getDate() - 30);
+            start = startDateObj.toISOString().split('T')[0];
+        }
+        const data = await getRevenueChartData(start, end);
         res.json({ success: true, data, message: "Fetched revenue chart data" });
     } catch (err) {
         res.status(err.statusCode || 500).json({ success: false, data: null, message: err.message });

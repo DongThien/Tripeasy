@@ -1,6 +1,6 @@
-export const getRevenueChartData = async (months) => {
+export const getRevenueChartData = async (startDate, endDate) => {
     const res = await axiosClient.get("/dashboard/revenue-chart", {
-        params: { months }
+        params: { startDate, endDate }
     });
     return res.data.data;
 };

@@ -8,10 +8,10 @@ import {
     fetchRecentBookingsRows
 } from "../models/dashboardModel.js";
 
-export const getRevenueChartData = async (months) => {
-    const rows = await fetchRevenueChartRows(months);
+export const getRevenueChartData = async (startDate, endDate) => {
+    const rows = await fetchRevenueChartRows(startDate, endDate);
     return rows.map(r => ({
-        name: `Tháng ${parseInt(r.month_num)}`,
+        name: r.name,
         total: Number(r.total)
     }));
 };

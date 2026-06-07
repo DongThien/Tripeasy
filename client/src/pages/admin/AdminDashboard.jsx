@@ -19,7 +19,21 @@ const AdminDashboard = () => {
     const [recentBookings, setRecentBookings] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [chartData, setChartData] = useState([]);
-    const [selectedRange, setSelectedRange] = useState(6);
+    const [startDate, setStartDate] = useState(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    });
+    const [endDate, setEndDate] = useState(() => {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    });
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -45,14 +59,14 @@ const AdminDashboard = () => {
     useEffect(() => {
         const fetchChartData = async () => {
             try {
-                const chartRes = await dashboardService.getRevenueChartData(selectedRange);
+                const chartRes = await dashboardService.getRevenueChartData(startDate, endDate);
                 setChartData(chartRes);
             } catch (err) {
                 console.error('Chart API error:', err);
             }
         };
         fetchChartData();
-    }, [selectedRange]);
+    }, [startDate, endDate]);
 
     if (isLoading) {
         return (
@@ -70,7 +84,14 @@ const AdminDashboard = () => {
             {/* Analytics & Top Tours */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
-                    <RevenueAnalytics selectedRange={selectedRange} onRangeChange={setSelectedRange}>
+                    <RevenueAnalytics
+                        startDate={startDate}
+                        endDate={endDate}
+                        onDateChange={(start, end) => {
+                            setStartDate(start);
+                            setEndDate(end);
+                        }}
+                    >
                         <RevenueChart data={chartData} formatVND={formatVND} />
                     </RevenueAnalytics>
                 </div>
