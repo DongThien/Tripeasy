@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Map, Ticket, Users, Settings, Phone, ChevronDown, Plus, List, Star } from "lucide-react";
+import { LayoutDashboard, Map, Ticket, Users, Settings, Phone, ChevronDown, Plus, List, Star, MapPin } from "lucide-react";
 
 const menu = [
     { label: "Dashboard", icon: <LayoutDashboard className="w-5 h-5" />, active: true },
@@ -43,7 +43,13 @@ const Sidebar = () => {
     }, [user]);
     return (
         <aside className="w-64 h-screen bg-white border-r flex flex-col fixed left-0 top-0 z-20">
-            <div className="p-6 text-2xl font-bold text-[#8B1A1A]">Tripeasy Admin</div>
+            <Link to="/client" className="flex items-center gap-2.5 px-6 py-5 border-b border-gray-100 hover:bg-gray-50/50 transition group select-none">
+                <MapPin className="w-7 h-7 text-[#8B1A1A] group-hover:scale-110 transition-transform duration-200" />
+                <div className="flex flex-col">
+                    <span className="font-black text-xl tracking-tight text-[#8B1A1A]">Tripeasy</span>
+                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider -mt-1.5 font-mono">Admin Panel</span>
+                </div>
+            </Link>
             <nav className="flex-1 px-2">
                 <ul className="space-y-1 mt-2">
                     <li>
