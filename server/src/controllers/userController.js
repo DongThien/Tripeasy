@@ -1,3 +1,4 @@
+import { OAuth2Client } from "google-auth-library";
 import {
     registerData,
     loginData,
@@ -9,8 +10,11 @@ import {
     forgotPasswordData,
     resetPasswordData,
     changePasswordData,
-    deleteUserData
+    deleteUserData,
+    loginWithSocialData
 } from "../services/userService.js";
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const register = async (req, res) => {
     try {
@@ -136,5 +140,67 @@ export const deleteUser = async (req, res) => {
         res.json({ success: true, message });
     } catch (err) {
         res.status(err.statusCode || 500).json({ success: false, message: err.message });
+    }
+};
+
+export const loginWithGoogle = async (req, res) => {
+    try {
+        const { credential, isMock, mockEmail, mockName } = req.body;
+        
+        let email = "";
+        let name = "";
+
+        const hasGoogleClientId = !!process.env.GOOGLE_CLIENT_ID;
+        if (isMock || !hasGoogleClientId || (credential && credential.startsWith("mock_"))) {
+            email = mockEmail || (credential && credential.replace("mock_", "")) || "google-mock@gmail.com";
+            name = mockName || "Google User Test";
+        } else {
+            const ticket = await googleClient.verifyIdToken({
+                idToken: credential,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+            const payload = ticket.getPayload();
+            email = payload.email;
+            name = payload.name;
+        }
+
+        const data = await loginWithSocialData(email, name);
+        res.json({ success: true, data, message: "Đăng nhập bằng Google thành công" });
+    } catch (err) {
+        console.error("Google login error:", err);
+        res.status(err.statusCode || 500).json({ success: false, data: null, message: err.message });
+    }
+};
+
+export const loginWithFacebook = async (req, res) => {
+    try {
+        const { accessToken, isMock, mockEmail, mockName } = req.body;
+
+        let email = "";
+        let name = "";
+
+        const hasFacebookAppId = !!process.env.FACEBOOK_APP_ID;
+        if (isMock || !hasFacebookAppId || (accessToken && accessToken.startsWith("mock_"))) {
+            email = mockEmail || (accessToken && accessToken.replace("mock_", "")) || "facebook-mock@gmail.com";
+            name = mockName || "Facebook User Test";
+        } else {
+            const response = await fetch(`https://graph.facebook.com/me?fields=id,name,email&access_token=${accessToken}`);
+            if (!response.ok) {
+                throw new Error("Xác thực Facebook Access Token thất bại");
+            }
+            const payload = await response.json();
+            email = payload.email;
+            name = payload.name;
+
+            if (!email) {
+                email = `${payload.id}@facebook.com`;
+            }
+        }
+
+        const data = await loginWithSocialData(email, name);
+        res.json({ success: true, data, message: "Đăng nhập bằng Facebook thành công" });
+    } catch (err) {
+        console.error("Facebook login error:", err);
+        res.status(err.statusCode || 500).json({ success: false, data: null, message: err.message });
     }
 };

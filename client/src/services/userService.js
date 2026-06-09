@@ -21,5 +21,11 @@ export const changePassword = (id, currentPassword, newPassword) =>
 export const deleteUser = (id) =>
     axiosClient.delete(`/users/${id}`).then((r) => r.data);
 
-const userService = { getAllUsers, getUserStats, updateUser, toggleUserLock, createUser, changePassword, deleteUser };
+export const loginGoogle = (data) =>
+    axiosClient.post('/users/login/google', data).then((r) => r.data);
+
+export const loginFacebook = (data) =>
+    axiosClient.post('/users/login/facebook', data).then((r) => r.data);
+
+const userService = { getAllUsers, getUserStats, updateUser, toggleUserLock, createUser, changePassword, deleteUser, loginGoogle, loginFacebook };
 export default userService;

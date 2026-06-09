@@ -7,6 +7,8 @@ const router = express.Router();
 // --- LUỒNG AUTH CÔNG KHAI (Không cần đăng nhập) ---
 router.post("/register", userController.register);
 router.post("/login", userController.login);
+router.post("/login/google", userController.loginWithGoogle);
+router.post("/login/facebook", userController.loginWithFacebook);
 router.post("/forgot-password", userController.forgotPassword);
 router.post("/reset-password", userController.resetPassword);
 

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, MapPin, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, MapPin, User, X as CloseIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axiosClient from '../../services/axiosClient';
+import userService from '../../services/userService';
 
 const HERO_SLIDES = [
     {
@@ -31,6 +32,134 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [currentSlide, setCurrentSlide] = useState(0);
     const navigate = useNavigate();
+
+    // Social Auth states
+    const [showMockModal, setShowMockModal] = useState(false);
+    const [mockProvider, setMockProvider] = useState("");
+    const [mockEmail, setMockEmail] = useState("");
+    const [mockName, setMockName] = useState("");
+
+    const handleGoogleLoginSuccess = async (credential) => {
+        try {
+            const response = await userService.loginGoogle({ credential });
+            handleSocialAuthResponse(response);
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Đăng nhập Google thất bại");
+        }
+    };
+
+    const handleFacebookLoginSuccess = async (accessToken) => {
+        try {
+            const response = await userService.loginFacebook({ accessToken });
+            handleSocialAuthResponse(response);
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Đăng nhập Facebook thất bại");
+        }
+    };
+
+    const handleSocialAuthResponse = (response) => {
+        const { success, data, message } = response || {};
+        if (success) {
+            localStorage.setItem('token', data?.token);
+            localStorage.setItem('user', JSON.stringify(data?.user));
+            toast.success(message || 'Đăng nhập thành công');
+            window.dispatchEvent(new Event('storage'));
+            const role = data?.user?.role;
+            if (role === 'admin') {
+                navigate('/admin/dashboard');
+            } else {
+                navigate('/client');
+            }
+        } else {
+            toast.error(message || 'Đăng nhập thất bại');
+        }
+    };
+
+    const handleMockSubmit = async (e) => {
+        e.preventDefault();
+        if (!mockEmail.trim()) {
+            toast.error("Vui lòng nhập email");
+            return;
+        }
+        try {
+            let response;
+            if (mockProvider === "google") {
+                response = await userService.loginGoogle({
+                    isMock: true,
+                    mockEmail: mockEmail.trim(),
+                    mockName: mockName.trim()
+                });
+            } else {
+                response = await userService.loginFacebook({
+                    isMock: true,
+                    mockEmail: mockEmail.trim(),
+                    mockName: mockName.trim()
+                });
+            }
+            handleSocialAuthResponse(response);
+            setShowMockModal(false);
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Đăng nhập giả lập thất bại");
+        }
+    };
+
+    useEffect(() => {
+        // Load Google GIS Script
+        const googleScript = document.createElement("script");
+        googleScript.src = "https://accounts.google.com/gsi/client";
+        googleScript.async = true;
+        googleScript.defer = true;
+        document.body.appendChild(googleScript);
+
+        googleScript.onload = () => {
+            const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+            if (googleClientId && window.google) {
+                window.google.accounts.id.initialize({
+                    client_id: googleClientId,
+                    callback: (res) => {
+                        handleGoogleLoginSuccess(res.credential);
+                    },
+                });
+                
+                const container = document.getElementById("googleBtnContainer");
+                if (container) {
+                    window.google.accounts.id.renderButton(container, {
+                        theme: "outline",
+                        size: "large",
+                        width: 200,
+                    });
+                }
+            }
+        };
+
+        // Load Facebook SDK
+        const fbScript = document.createElement("script");
+        fbScript.src = "https://connect.facebook.net/vi_VN/sdk.js";
+        fbScript.async = true;
+        fbScript.defer = true;
+        document.body.appendChild(fbScript);
+
+        fbScript.onload = () => {
+            const fbAppId = import.meta.env.VITE_FACEBOOK_APP_ID;
+            if (fbAppId && window.FB) {
+                window.FB.init({
+                    appId: fbAppId,
+                    cookie: true,
+                    xfbml: true,
+                    version: "v18.0",
+                });
+            }
+        };
+
+        return () => {
+            try {
+                document.body.removeChild(googleScript);
+                document.body.removeChild(fbScript);
+            } catch (e) {
+                // Ignore if already removed
+            }
+        };
+    }, []);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -153,22 +282,58 @@ const Login = () => {
                             </div>
 
                             <div className="mt-5 grid grid-cols-2 gap-3">
-                                <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white py-3 text-sm font-medium text-gray-700 transition hover:border-gray-300">
-                                    <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
-                                        <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.651 32.657 29.21 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.957 3.043l5.657-5.657C34.046 6.053 29.27 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
-                                        <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.957 3.043l5.657-5.657C34.046 6.053 29.27 4 24 4c-7.682 0-14.347 4.337-17.694 10.691z" />
-                                        <path fill="#4CAF50" d="M24 44c5.168 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.147 35.091 26.676 36 24 36c-5.188 0-9.618-3.324-11.283-7.946l-6.522 5.025C9.5 39.556 16.227 44 24 44z" />
-                                        <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.793 2.374-2.318 4.401-4.274 5.57l6.19 5.238C36.8 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
-                                    </svg>
-                                    Google
-                                </button>
+                                 {/* Google Button */}
+                                 <div className="relative inline-flex items-center justify-center">
+                                     <button 
+                                         type="button"
+                                         onClick={() => {
+                                             if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+                                                 setMockProvider("google");
+                                                 setMockEmail("google-test@gmail.com");
+                                                 setMockName("Google User Test");
+                                                 setShowMockModal(true);
+                                             }
+                                         }}
+                                         className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white py-3 text-sm font-medium text-gray-700 transition hover:border-gray-300 cursor-pointer"
+                                     >
+                                         <svg viewBox="0 0 48 48" className="h-5 w-5" aria-hidden="true">
+                                             <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303C33.651 32.657 29.21 36 24 36c-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.957 3.043l5.657-5.657C34.046 6.053 29.27 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
+                                             <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.957 3.043l5.657-5.657C34.046 6.053 29.27 4 24 4c-7.682 0-14.347 4.337-17.694 10.691z" />
+                                             <path fill="#4CAF50" d="M24 44c5.168 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.147 35.091 26.676 36 24 36c-5.188 0-9.618-3.324-11.283-7.946l-6.522 5.025C9.5 39.556 16.227 44 24 44z" />
+                                             <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.793 2.374-2.318 4.401-4.274 5.57l6.19 5.238C36.8 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
+                                         </svg>
+                                         Google
+                                     </button>
+                                     {import.meta.env.VITE_GOOGLE_CLIENT_ID && (
+                                         <div id="googleBtnContainer" className="absolute inset-0 opacity-0 cursor-pointer overflow-hidden z-10"></div>
+                                     )}
+                                 </div>
 
-                                <button className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white py-3 text-sm font-medium text-gray-700 transition hover:border-gray-300">
-                                    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-                                        <path fill="#1877F2" d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073C0 18.099 4.388 23.094 10.125 24v-8.438H7.078v-3.49h3.047V9.414c0-3.017 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.962h-1.514c-1.491 0-1.956.931-1.956 1.887v2.263h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.099 24 12.073z" />
-                                    </svg>
-                                    Facebook
-                                </button>
+                                 {/* Facebook Button */}
+                                 <button 
+                                     type="button"
+                                     onClick={() => {
+                                         const fbAppId = import.meta.env.VITE_FACEBOOK_APP_ID;
+                                         if (fbAppId && window.FB) {
+                                             window.FB.login((res) => {
+                                                 if (res.authResponse) {
+                                                     handleFacebookLoginSuccess(res.authResponse.accessToken);
+                                                 }
+                                             }, { scope: 'email' });
+                                         } else {
+                                             setMockProvider("facebook");
+                                             setMockEmail("facebook-test@gmail.com");
+                                             setMockName("Facebook User Test");
+                                             setShowMockModal(true);
+                                         }
+                                     }}
+                                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white py-3 text-sm font-medium text-gray-700 transition hover:border-gray-300 cursor-pointer"
+                                 >
+                                     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                                         <path fill="#1877F2" d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073C0 18.099 4.388 23.094 10.125 24v-8.438H7.078v-3.49h3.047V9.414c0-3.017 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.962h-1.514c-1.491 0-1.956.931-1.956 1.887v2.263h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.099 24 12.073z" />
+                                     </svg>
+                                     Facebook
+                                 </button>
                             </div>
                         </div>
                     </div>
@@ -216,6 +381,72 @@ const Login = () => {
                     </div>
                 </section>
             </div>
+
+            {/* Mock Login Modal for Developer / Local testing */}
+            {showMockModal && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div 
+                        className="relative w-[92%] max-w-md rounded-3xl bg-white p-6 shadow-2xl border border-gray-100 flex flex-col animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#8B1A1A] text-xs font-bold text-white uppercase font-mono">
+                                    {mockProvider === "google" ? "G" : "F"}
+                                </span>
+                                Đăng nhập {mockProvider === "google" ? "Google" : "Facebook"} Giả lập
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => setShowMockModal(false)}
+                                className="p-1 rounded-full hover:bg-gray-100 text-gray-400 transition"
+                            >
+                                <CloseIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <p className="mt-3 text-xs text-gray-400 leading-relaxed bg-amber-50 text-amber-800 p-3.5 rounded-2xl border border-amber-100">
+                            Hệ thống đang chạy ở chế độ **Phát triển (Local Dev)** và chưa được cấu hình Google Client ID hay Facebook App ID. Bạn có thể nhập thông tin tùy ý dưới đây để kiểm tra luồng tự động đăng nhập/đăng ký tài khoản mới.
+                        </p>
+                        <form className="mt-5 space-y-4" onSubmit={handleMockSubmit}>
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-bold text-gray-500 uppercase">Họ và tên</label>
+                                <input
+                                    type="text"
+                                    value={mockName}
+                                    onChange={(e) => setMockName(e.target.value)}
+                                    placeholder="Nguyễn Văn A"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] transition"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-bold text-gray-500 uppercase">Địa chỉ Email</label>
+                                <input
+                                    type="email"
+                                    value={mockEmail}
+                                    onChange={(e) => setMockEmail(e.target.value)}
+                                    placeholder="user-test@gmail.com"
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] transition"
+                                />
+                            </div>
+                            <div className="mt-6 flex gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowMockModal(false)}
+                                    className="flex-1 rounded-xl border border-gray-200 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-50 transition cursor-pointer"
+                                >
+                                    Hủy bỏ
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 rounded-xl bg-[#8B1A1A] hover:bg-[#a32626] py-2.5 text-xs font-bold text-white transition cursor-pointer shadow-md shadow-red-950/10"
+                                >
+                                    Đăng nhập
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

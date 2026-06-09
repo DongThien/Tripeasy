@@ -284,3 +284,60 @@ export const deleteUserData = async (userId) => {
     }
     return "Xóa tài khoản thành công!";
 };
+
+export const loginWithSocialData = async (email, name) => {
+    if (!email) {
+        const error = new Error("Email xác thực không hợp lệ");
+        error.statusCode = 400;
+        throw error;
+    }
+
+    let user = await fetchUserByEmailRow(email);
+
+    if (!user) {
+        // Tạo tài khoản mới cho đăng nhập lần đầu
+        const randomPassword = crypto.randomBytes(16).toString("hex");
+        const passwordHash = await bcrypt.hash(randomPassword, 10);
+        
+        const newRow = await insertUserRow({
+            username: name || email.split("@")[0],
+            email,
+            passwordHash,
+            phone_number: "",
+            address: "",
+            ip_address: ""
+        });
+        
+        user = {
+            user_id: newRow.user_id,
+            username: newRow.username,
+            email: newRow.email,
+            phone_number: newRow.phone_number,
+            role: newRow.role,
+            is_active: true
+        };
+    } else {
+        if (!user.is_active) {
+            const error = new Error("Tài khoản của bạn hiện đang bị khóa");
+            error.statusCode = 403;
+            throw error;
+        }
+    }
+
+    const token = jwt.sign(
+        { id: user.user_id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" }
+    );
+
+    return {
+        token,
+        user: {
+            id: user.user_id,
+            username: user.username,
+            email: user.email,
+            phone: user.phone_number || "—",
+            role: user.role
+        }
+    };
+};
