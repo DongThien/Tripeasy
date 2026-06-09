@@ -7,6 +7,7 @@ import contactRoutes from "./contactRoutes.js";
 import chatRoutes from "./chatRoutes.js";
 import settingRoutes from "./settingRoutes.js";
 import reviewRoutes from "./reviewRoutes.js";
+import subscriptionRoutes from "./subscriptionRoutes.js";
 
 const router = express.Router();
 router.use("/tours", tourRoutes);
@@ -17,5 +18,6 @@ router.use("/contacts", contactRoutes);
 router.use("/chat", chatRoutes);
 router.use("/settings", settingRoutes);
 router.use("/reviews", reviewRoutes);
+router.use("/newsletter", subscriptionRoutes);
 
 export default router;

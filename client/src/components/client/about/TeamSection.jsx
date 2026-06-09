@@ -2,22 +2,22 @@ import React from 'react';
 
 const TEAM = [
     {
-        name: 'Nguyễn Minh Khôi',
+        name: 'Nguyễn Đông Thiện',
         role: 'Giám đốc điều hành',
         avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
     },
     {
-        name: 'Trần Thị Hà',
+        name: 'Nguyễn Đông Thiện',
         role: 'Trưởng phòng Tour',
         avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
     },
     {
-        name: 'Lê Đình Phúc',
+        name: 'Nguyễn Đông Thiện',
         role: 'Hướng dẫn viên chính',
         avatar: 'https://randomuser.me/api/portraits/men/55.jpg',
     },
     {
-        name: 'Phạm Thùy Linh',
+        name: 'Nguyễn Đông Thiện',
         role: 'Chăm sóc khách hàng',
         avatar: 'https://randomuser.me/api/portraits/women/68.jpg',
     },

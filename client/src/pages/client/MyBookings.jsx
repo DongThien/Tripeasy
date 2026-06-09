@@ -98,10 +98,10 @@ const MyBookings = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#FDFBF7] pt-24 pb-16">
+        <div className="min-h-screen bg-[#FDFBF7] pt-24">
             <ClientNavbar />
             
-            <main className="max-w-5xl mx-auto px-4 md:px-6">
+            <main className="max-w-5xl mx-auto px-4 md:px-6 pb-16">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
@@ -146,7 +146,10 @@ const MyBookings = () => {
                                     <div className={`absolute left-0 inset-y-0 w-1.5 ${isCancelled ? 'bg-gray-300' : isPending ? 'bg-orange-400' : 'bg-green-500'}`} />
 
                                     {/* Tour Image */}
-                                    <div className="w-full md:w-44 h-28 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0">
+                                    <Link 
+                                        to={`/client/tours/${booking.tour_id}`}
+                                        className="w-full md:w-44 h-28 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 block hover:opacity-90 transition-opacity"
+                                    >
                                         {booking.image ? (
                                             <img 
                                                 src={booking.image} 
@@ -158,7 +161,7 @@ const MyBookings = () => {
                                                 Tripeasy
                                             </div>
                                         )}
-                                    </div>
+                                    </Link>
 
                                     {/* Information breakdown */}
                                     <div className="flex-1 space-y-3">
@@ -166,7 +169,9 @@ const MyBookings = () => {
                                             <div>
                                                 <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Mã đặt chỗ: #BK-{booking.booking_id}</span>
                                                 <h3 className="font-extrabold text-gray-800 text-lg leading-snug hover:text-[#8B1A1A] transition mt-0.5">
-                                                    {booking.tour_name}
+                                                    <Link to={`/client/tours/${booking.tour_id}`} className="hover:underline">
+                                                        {booking.tour_name}
+                                                    </Link>
                                                 </h3>
                                             </div>
                                             

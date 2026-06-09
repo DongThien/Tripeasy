@@ -279,7 +279,8 @@ const mapBooking = (row) => ({
     payment_method: row.payment_method || "BANK_TRANSFER",
     start_date: row.start_date,
     tour_id: row.tour_id,
-    user_id: row.user_id
+    user_id: row.user_id,
+    image: row.image
 });
 
 export const createBookingData = async ({

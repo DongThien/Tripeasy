@@ -20,13 +20,14 @@ const TourDetailPolicies = ({ tour }) => {
         );
     };
 
-    const PolicySection = ({ title, items, isRed = false }) => {
+    const PolicySection = ({ title, items, isRed = false, subtitle }) => {
         const validItems = ensureArray(items);
         if (validItems.length === 0) return null;
 
         return (
             <div className={`mb-6 last:mb-0 rounded-2xl border ${isRed ? 'border-[#F3D4D4] bg-[#FFF7F7]' : 'border-gray-100 bg-gray-50'} p-5`}>
                 <h4 className={`text-xl md:text-2xl font-bold mb-3 ${isRed ? 'text-[#8B1A1A]' : 'text-gray-900'}`}>{title}</h4>
+                {subtitle && <p className={`text-lg md:text-xl mb-4 font-bold leading-relaxed ${isRed ? 'text-[#8B1A1A]' : 'text-gray-800'}`}>{subtitle}</p>}
                 <ul className="space-y-3">
                     {validItems.map((item, index) => (
                         <li key={index} className="flex items-start gap-2 text-lg md:text-xl text-gray-700 leading-relaxed">
@@ -51,7 +52,12 @@ const TourDetailPolicies = ({ tour }) => {
 
                 {ensureArray(tour?.policy_child).length > 0 && <div className="h-px bg-gray-100 my-6" />}
 
-                <PolicySection title="QUY ĐỊNH HOÀN HỦY" items={tour?.policy_cancel} isRed={true} />
+                <PolicySection 
+                    title="QUY ĐỊNH HOÀN HỦY" 
+                    items={tour?.policy_cancel} 
+                    isRed={true} 
+                    subtitle="Phí hủy tour căn cứ vào thời gian khách hủy tour so với ngày khởi hành dự kiến, cụ thể:"
+                />
 
                 {ensureArray(tour?.policy_cancel).length > 0 && <div className="h-px bg-gray-100 my-6" />}
 

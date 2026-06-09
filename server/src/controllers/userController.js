@@ -145,21 +145,24 @@ export const deleteUser = async (req, res) => {
 
 export const loginWithGoogle = async (req, res) => {
     try {
-        const { credential, isMock, mockEmail, mockName } = req.body;
+        const { accessToken, isMock, mockEmail, mockName } = req.body;
         
         let email = "";
         let name = "";
 
         const hasGoogleClientId = !!process.env.GOOGLE_CLIENT_ID;
-        if (isMock || !hasGoogleClientId || (credential && credential.startsWith("mock_"))) {
-            email = mockEmail || (credential && credential.replace("mock_", "")) || "google-mock@gmail.com";
+        if (isMock || !hasGoogleClientId || (accessToken && accessToken.startsWith("mock_"))) {
+            email = mockEmail || (accessToken && accessToken.replace("mock_", "")) || "google-mock@gmail.com";
             name = mockName || "Google User Test";
         } else {
-            const ticket = await googleClient.verifyIdToken({
-                idToken: credential,
-                audience: process.env.GOOGLE_CLIENT_ID,
-            });
-            const payload = ticket.getPayload();
+            if (!accessToken) {
+                return res.status(400).json({ success: false, message: "Thiếu Google Access Token" });
+            }
+            const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+            if (!response.ok) {
+                throw new Error("Xác thực Google Access Token thất bại");
+            }
+            const payload = await response.json();
             email = payload.email;
             name = payload.name;
         }

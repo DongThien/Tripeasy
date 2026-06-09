@@ -54,6 +54,17 @@ const contactService = {
             console.error('Error replying to contact:', error);
             throw error;
         }
+    },
+
+    // Đăng ký nhận tin ưu đãi (Newsletter)
+    subscribeNewsletter: async (email) => {
+        try {
+            const response = await axiosClient.post('/newsletter/subscribe', { email });
+            return response.data;
+        } catch (error) {
+            console.error('Error subscribing to newsletter:', error);
+            throw error;
+        }
     }
 };
 

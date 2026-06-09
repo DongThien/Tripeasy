@@ -32,6 +32,7 @@ const ForgotPassword = React.lazy(() => import('./pages/auth/ForgotPassword'));
 const ResetPassword = React.lazy(() => import('./pages/auth/ResetPassword'));
 const Checkout = React.lazy(() => import('./pages/client/Checkout'));
 const MyBookings = React.lazy(() => import('./pages/client/MyBookings'));
+const Support = React.lazy(() => import('./pages/client/Support'));
 
 // === THÊM COMPONENT BẢO VỆ NÀY ===
 const AdminRoute = ({ children }) => {
@@ -83,6 +84,7 @@ const App = () => (
                 <Route path="news/:slug" element={<NewsDetail />} />
                 <Route path="careers" element={<Careers />} />
                 <Route path="contact" element={<Contact />} />
+                <Route path="support" element={<Support />} />
                 {/* Thêm các route client khác tại đây */}
             </Route>
             <Route path="*" element={<div>404 Not Found</div>} />
