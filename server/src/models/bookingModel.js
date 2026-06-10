@@ -27,7 +27,6 @@ export const updateDepartureStockRow = async (tourId, startDate, quantity) => {
 export const insertBookingRow = async ({
     tourId,
     userId,
-    promotionId,
     numAdults,
     numChildren,
     totalPrice,
@@ -36,14 +35,13 @@ export const insertBookingRow = async ({
     paymentMethod
 }) => {
     const insertQuery = `
-        INSERT INTO bookings (tour_id, user_id, promotion_id, num_adults, num_children, total_price, payment_status, booking_status, special_requests, start_date, payment_method)
-        VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 'PENDING', $7, $8, $9)
+        INSERT INTO bookings (tour_id, user_id, num_adults, num_children, total_price, payment_status, booking_status, special_requests, start_date, payment_method)
+        VALUES ($1, $2, $3, $4, $5, 'PENDING', 'PENDING', $6, $7, $8)
         RETURNING *
     `;
     const { rows } = await pgPool.query(insertQuery, [
         tourId,
         userId,
-        promotionId,
         numAdults,
         numChildren,
         totalPrice,

@@ -288,7 +288,6 @@ export const createBookingData = async ({
     user_id,
     num_adults,
     num_children,
-    promotion_id,
     special_requests,
     departure_id,
     payment_method
@@ -322,7 +321,6 @@ export const createBookingData = async ({
     const booking = await insertBookingRow({
         tourId: tour_id,
         userId: user_id,
-        promotionId: promotion_id,
         numAdults: num_adults,
         numChildren: num_children,
         totalPrice,
