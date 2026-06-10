@@ -14,6 +14,8 @@ const TourFilterSidebar = ({
     onTypeChange,
     selectedRating,
     onRatingChange,
+    selectedDate = '',
+    onDateChange,
     onClearFilters,
 }) => {
     // Format currency for display
@@ -120,6 +122,17 @@ const TourFilterSidebar = ({
                             </select>
                             <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                         </div>
+                    </div>
+
+                    {/* Ngày khởi hành */}
+                    <div>
+                        <h3 className="mb-3 font-semibold text-gray-900">Ngày khởi hành</h3>
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => onDateChange && onDateChange(e.target.value)}
+                            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-[#8B1A1A]"
+                        />
                     </div>
 
                     {/* Area */}

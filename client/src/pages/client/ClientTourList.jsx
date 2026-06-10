@@ -27,6 +27,7 @@ const ClientTourList = () => {
     const [selectedRating, setSelectedRating] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedSort, setSelectedSort] = useState('Phổ biến nhất');
+    const [selectedDate, setSelectedDate] = useState('');
 
     const [user] = useState(() => {
         const raw = localStorage.getItem('user');
@@ -63,9 +64,14 @@ const ClientTourList = () => {
     useEffect(() => {
         const q = searchParams.get('q') || '';
         const budget = searchParams.get('budget') || 'all';
+        const dateParam = searchParams.get('date') || '';
 
         if (q) {
             setSearchQuery(q);
+        }
+
+        if (dateParam) {
+            setSelectedDate(dateParam);
         }
 
         if (budget === 'under-2') {
@@ -146,9 +152,21 @@ const ClientTourList = () => {
                 return (tour.rating_avg || 0) >= targetRating;
             })();
 
-            return matchesSearch && matchesPrice && matchesArea && matchesOrigin && matchesType && matchesRating;
+            // Date filter
+            const matchesDate = (() => {
+                if (!selectedDate) return true;
+                if (!Array.isArray(tour.departures) || tour.departures.length === 0) return false;
+                const filterDateStr = selectedDate; 
+                return tour.departures.some((dep) => {
+                    if (!dep.start_date) return false;
+                    const depDateStr = String(dep.start_date).substring(0, 10);
+                    return depDateStr === filterDateStr && dep.stock > 0 && dep.status === 'AVAILABLE';
+                });
+            })();
+
+            return matchesSearch && matchesPrice && matchesArea && matchesOrigin && matchesType && matchesRating && matchesDate;
         });
-    }, [selectedAreas, selectedOrigin, selectedType, selectedRating, searchQuery, tours, priceRange]);
+    }, [selectedAreas, selectedOrigin, selectedType, selectedRating, searchQuery, tours, priceRange, selectedDate]);
 
     // Reset to page 1 when filters change
     useEffect(() => {
@@ -205,6 +223,7 @@ const ClientTourList = () => {
         setPriceRange([0, 10000000]);
         setSelectedType('');
         setSelectedRating('');
+        setSelectedDate('');
         setSelectedSort('Phổ biến nhất'); // Reset sort to default
         setCurrentPage(1);
     };
@@ -231,6 +250,8 @@ const ClientTourList = () => {
                             onTypeChange={setSelectedType}
                             selectedRating={selectedRating}
                             onRatingChange={setSelectedRating}
+                            selectedDate={selectedDate}
+                            onDateChange={setSelectedDate}
                             onClearFilters={handleClearFilters}
                         />
 

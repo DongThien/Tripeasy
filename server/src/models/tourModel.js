@@ -3,7 +3,16 @@ import { pgPool } from "../config/db.js";
 export const fetchAllToursRows = async ({ destination, region, title, limit, offset }) => {
     let baseQuery = `
         SELECT t.*, 
-               (SELECT i.image_url FROM images i WHERE i.tour_id = t.tour_id ORDER BY i.upload_date ASC LIMIT 1) AS image_url
+               (SELECT i.image_url FROM images i WHERE i.tour_id = t.tour_id ORDER BY i.upload_date ASC LIMIT 1) AS image_url,
+               (SELECT COALESCE(JSON_AGG(
+                   JSON_BUILD_OBJECT(
+                       'departure_id', d.departure_id, 
+                       'start_date', d.start_date, 
+                       'end_date', d.end_date, 
+                       'stock', d.stock, 
+                       'status', d.status
+                   ) ORDER BY d.start_date ASC
+               ), '[]'::json) FROM tour_departures d WHERE d.tour_id = t.tour_id) AS departures
         FROM tours t
         WHERE 1=1
     `;
