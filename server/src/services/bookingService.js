@@ -53,7 +53,7 @@ const sendBookingConfirmationEmail = async (booking) => {
 
     const { booking_id, title, user_name, email, num_adults, num_children, total_price, start_date, payment_method } = booking;
     const paymentMethodText = payment_method === 'OFFICE' ? 'Thanh toán trực tiếp tại văn phòng' : 'Chuyển khoản Ngân hàng (VietQR)';
-    
+
     const siteName = getSetting('general.siteName') || "Tripeasy";
     const hotline = getSetting('general.hotline') || "1900 1234";
     const contactAddress = getSetting('general.address') || "Số 3 đường Cầu Giấy, phường Láng Thượng, quận Đống Đa, Hà Nội";
@@ -161,7 +161,7 @@ const sendBookingUpdateEmail = async (booking) => {
     if (!transporter) return;
 
     const { booking_id, title, user_name, email, num_adults, num_children, total_price, start_date, booking_status, payment_status } = booking;
-    
+
     const siteName = getSetting('general.siteName') || "Tripeasy";
     const hotline = getSetting('general.hotline') || "1900 1234";
     const contactAddress = getSetting('general.address') || "Số 3 đường Cầu Giấy, phường Láng Thượng, quận Đống Đa, Hà Nội";
@@ -334,7 +334,6 @@ export const createBookingData = async ({
     // Lấy thông tin đầy đủ kèm theo liên kết bảng để gửi email
     const fullBooking = await fetchBookingByIdRow(booking.booking_id);
     if (fullBooking) {
-        // Gửi email không chặn luồng chạy chính
         sendBookingConfirmationEmail(fullBooking).catch(err => {
             console.error("Gửi email đặt tour lỗi:", err);
         });

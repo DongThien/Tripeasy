@@ -63,7 +63,7 @@ const ChatbotWidget = () => {
                 const res = await settingService.getSettings();
                 if (res && res.success) {
                     setSysSettings(res.data);
-                    
+
                     // If messages only has the initial fallback welcome message, update it with correct siteName
                     const siteName = res.data.general?.siteName || 'Tripeasy';
                     setMessages(prev => {
@@ -84,8 +84,7 @@ const ChatbotWidget = () => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         let sId = localStorage.getItem('tripeasy_chat_session');
-        
-        // Check if user logged out
+
         const isLoggingOut = !token && lastToken;
 
         if (isLoggingOut) {
@@ -456,7 +455,7 @@ const ChatbotWidget = () => {
                                                     Chờ thanh toán
                                                 </span>
                                             </div>
-                                            
+
                                             <div className="text-[11px] text-gray-600 space-y-1">
                                                 <p><strong className="text-gray-800">Tour:</strong> {msg.metadata.booking.tour_title}</p>
                                                 <p><strong className="text-gray-800">Khách hàng:</strong> {msg.metadata.booking.user_fullname}</p>
@@ -469,20 +468,20 @@ const ChatbotWidget = () => {
                                                 const accountNumber = sysSettings?.payment?.accountNumber || '0869688128';
                                                 const accountName = sysSettings?.payment?.accountName || 'NGUYEN DONG THIEN';
                                                 const qrTemplate = sysSettings?.payment?.qrTemplate || 'TRIPEASY BK {booking_id}';
-                                                
+
                                                 const addInfoText = qrTemplate.replace('{booking_id}', msg.metadata.booking.booking_id);
                                                 const encodedAddInfo = encodeURIComponent(addInfoText);
                                                 const encodedAccountName = encodeURIComponent(accountName);
                                                 const qrUrl = `https://img.vietqr.io/image/${bankCode.toLowerCase()}-${accountNumber}-compact2.png?amount=${msg.metadata.booking.total_price}&addInfo=${encodedAddInfo}&accountName=${encodedAccountName}`;
-                                                
+
                                                 return (
                                                     <div className="border-t border-gray-100 pt-2.5 space-y-2 text-center">
                                                         <p className="text-[9px] text-gray-400 font-medium">Nhấp vào QR Code để phóng to:</p>
-                                                        <div 
+                                                        <div
                                                             className="relative w-28 h-28 mx-auto border border-gray-100 rounded-xl p-1 bg-white shadow-sm hover:scale-105 transition-transform duration-300 cursor-pointer group"
                                                             onClick={() => setSelectedQr(qrUrl)}
                                                         >
-                                                            <img 
+                                                            <img
                                                                 src={qrUrl}
                                                                 alt="Mã VietQR"
                                                                 className="w-full h-full object-contain"
@@ -637,11 +636,11 @@ const ChatbotWidget = () => {
 
             {/* QR Code Zoom Lightbox Overlay */}
             {selectedQr && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4 animate-in fade-in duration-200"
                     onClick={() => setSelectedQr(null)}
                 >
-                    <div 
+                    <div
                         className="bg-white p-6 rounded-3xl max-w-sm w-full shadow-2xl relative flex flex-col items-center animate-in zoom-in-95 duration-200"
                         onClick={(e) => e.stopPropagation()}
                     >
@@ -654,20 +653,20 @@ const ChatbotWidget = () => {
                         >
                             <X className="w-4 h-4" />
                         </button>
-                        
+
                         <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-1.5 self-start">
                             <span className="w-2 h-2 bg-[#8B1A1A] rounded-full"></span>
                             Quét mã thanh toán VietQR
                         </h3>
-                        
+
                         <div className="w-64 h-64 border border-gray-100 rounded-2xl p-2 bg-white shadow-sm flex items-center justify-center">
-                            <img 
+                            <img
                                 src={selectedQr}
                                 alt="Mã VietQR Phóng To"
                                 className="w-full h-full object-contain"
                             />
                         </div>
-                        
+
                         <p className="text-xs text-gray-500 mt-4 text-center leading-relaxed">
                             Mở ứng dụng Ngân hàng / Ví điện tử bất kỳ của bạn để quét mã QR chuyển khoản tự động và hoàn tất giao dịch nhanh chóng.
                         </p>
