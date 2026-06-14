@@ -107,8 +107,8 @@ export const fetchTourDepartureForChatRow = async (tourId, startDate) => {
     const { rows } = await pgPool.query(
         `SELECT departure_id, start_date, stock 
          FROM tour_departures 
-         WHERE tour_id = $1 AND start_date = $2 AND status = 'AVAILABLE'`,
-        [tourId, startDate]
+         WHERE tour_id = $1 AND start_date = $2 AND start_date >= NOW()::date AND status = 'AVAILABLE'`,
+         [tourId, startDate]
     );
     return rows[0];
 };

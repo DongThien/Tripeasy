@@ -98,6 +98,30 @@ const Checkout = () => {
         return validDepartures.find(d => d.departure_id === parseInt(departureId));
     }, [validDepartures, departureId]);
 
+    useEffect(() => {
+        if (!loading && tour) {
+            if (!selectedDeparture) {
+                toast.error("Không tìm thấy thông tin ngày khởi hành hợp lệ!");
+                navigate(`/client/tours/${id}`);
+                return;
+            }
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const depDate = new Date(selectedDeparture.start_date);
+            depDate.setHours(0, 0, 0, 0);
+            if (depDate < today) {
+                toast.error("Ngày khởi hành ở quá khứ, không thể đặt tour!");
+                navigate(`/client/tours/${id}`);
+                return;
+            }
+            if (selectedDeparture.status !== 'AVAILABLE') {
+                toast.error("Ngày khởi hành này hiện không khả dụng để đặt!");
+                navigate(`/client/tours/${id}`);
+                return;
+            }
+        }
+    }, [loading, tour, selectedDeparture, navigate, id]);
+
     const totalPrice = useMemo(() => {
         if (!tour) return 0;
         return (adults * (tour.price_adult || 0)) + (children * (tour.price_child || 0));
@@ -117,6 +141,19 @@ const Checkout = () => {
 
         if (!selectedDeparture) {
             toast.error("Không tìm thấy thông tin ngày khởi hành hợp lệ!");
+            return;
+        }
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const depDate = new Date(selectedDeparture.start_date);
+        depDate.setHours(0, 0, 0, 0);
+        if (depDate < today) {
+            toast.error("Ngày khởi hành ở quá khứ, không thể đặt tour!");
+            return;
+        }
+        if (selectedDeparture.status !== 'AVAILABLE') {
+            toast.error("Ngày khởi hành này hiện không khả dụng để đặt!");
             return;
         }
 

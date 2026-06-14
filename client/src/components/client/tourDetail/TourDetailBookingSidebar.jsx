@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, ChevronDown, Info } from 'lucide-react';
 import { formatVND } from '../../../utils/formatHelper';
@@ -8,14 +8,34 @@ const TourDetailBookingSidebar = ({ tour }) => {
     const [adults, setAdults] = useState(1);
     const [children, setChildren] = useState(0);
 
-    // Chống sập nếu departures từ DB trả về chưa được parse
+    // Chống sập và chỉ lấy các lịch khởi hành từ ngày hôm nay trở đi có status là AVAILABLE
     const validDepartures = useMemo(() => {
-        if (!tour.departures) return [];
-        if (Array.isArray(tour.departures)) return tour.departures;
-        try { return JSON.parse(tour.departures); } catch { return []; }
+        let rawDeps = [];
+        if (!tour.departures) rawDeps = [];
+        else if (Array.isArray(tour.departures)) rawDeps = tour.departures;
+        else {
+            try { rawDeps = JSON.parse(tour.departures); } catch { rawDeps = []; }
+        }
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return rawDeps.filter(d => {
+            if (!d.start_date) return false;
+            const depDate = new Date(d.start_date);
+            depDate.setHours(0, 0, 0, 0);
+            return depDate >= today && d.status === 'AVAILABLE';
+        });
     }, [tour.departures]);
 
-    const [selectedDepId, setSelectedDepId] = useState(validDepartures[0]?.departure_id || '');
+    const [selectedDepId, setSelectedDepId] = useState('');
+
+    useEffect(() => {
+        if (validDepartures.length > 0) {
+            setSelectedDepId(validDepartures[0].departure_id.toString());
+        } else {
+            setSelectedDepId('');
+        }
+    }, [validDepartures]);
 
     const selectedDeparture = useMemo(() =>
         validDepartures.find(d => d.departure_id === parseInt(selectedDepId)),

@@ -306,6 +306,17 @@ export const createBookingData = async ({
         throw error;
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const depDate = new Date(departure.start_date);
+    depDate.setHours(0, 0, 0, 0);
+
+    if (depDate < today) {
+        const error = new Error("Không thể đặt tour với ngày khởi hành ở quá khứ!");
+        error.statusCode = 400;
+        throw error;
+    }
+
     const seatsToBook = num_adults + num_children;
     if (departure.stock < seatsToBook) {
         const error = new Error(`Rất tiếc, ngày này chỉ còn ${departure.stock} chỗ trống, không đủ cho đoàn ${seatsToBook} khách.`);
