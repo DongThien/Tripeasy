@@ -1,7 +1,8 @@
 import React from 'react';
 import { CalendarDays, Plus, Trash2 } from 'lucide-react';
+import { getTodayDateString, calculateEndDate } from '../../../utils/dateHelper';
 
-const TourDeparturesSection = ({ departures, addDeparture, removeDeparture, updateDeparture }) => {
+const TourDeparturesSection = ({ departures, addDeparture, removeDeparture, updateDeparture, duration }) => {
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between mb-6">
@@ -33,7 +34,17 @@ const TourDeparturesSection = ({ departures, addDeparture, removeDeparture, upda
                                 type="date"
                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-[#8B1A1A]"
                                 value={dep.start_date}
-                                onChange={(e) => updateDeparture(index, 'start_date', e.target.value)}
+                                min={getTodayDateString()}
+                                onChange={(e) => {
+                                    const newStart = e.target.value;
+                                    updateDeparture(index, 'start_date', newStart);
+                                    if (duration && newStart) {
+                                        const calculatedEnd = calculateEndDate(newStart, duration);
+                                        if (calculatedEnd) {
+                                            updateDeparture(index, 'end_date', calculatedEnd);
+                                        }
+                                    }
+                                }}
                             />
                         </div>
                         <div className="flex-1">
@@ -42,6 +53,7 @@ const TourDeparturesSection = ({ departures, addDeparture, removeDeparture, upda
                                 type="date"
                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-[#8B1A1A]"
                                 value={dep.end_date}
+                                min={dep.start_date || getTodayDateString()}
                                 onChange={(e) => updateDeparture(index, 'end_date', e.target.value)}
                             />
                         </div>

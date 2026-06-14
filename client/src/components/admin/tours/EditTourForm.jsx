@@ -4,6 +4,7 @@ import axiosClient from '../../../services/axiosClient';
 import toast from 'react-hot-toast';
 import { compressImages } from '../../../utils/imageCompressor';
 import { uploadTourImagesBackground } from '../../../services/imageUploadService';
+import { getTodayDateString, calculateEndDate } from '../../../utils/dateHelper';
 
 // Tái sử dụng 100% Component từ AddTour
 import TourBasicInfoSection from '../addTour/TourBasicInfoSection';
@@ -151,6 +152,20 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
     // 3. Các hàm Helpers dùng chung cho Components
     const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
+    // Tự động tính lại ngày về của các ngày khởi hành khi thời lượng tour thay đổi
+    useEffect(() => {
+        if (!formData.duration || departures.length === 0) return;
+        setDepartures(prev => prev.map(dep => {
+            if (dep.start_date) {
+                const calculatedEnd = calculateEndDate(dep.start_date, formData.duration);
+                if (calculatedEnd && calculatedEnd !== dep.end_date) {
+                    return { ...dep, end_date: calculatedEnd };
+                }
+            }
+            return dep;
+        }));
+    }, [formData.duration]);
+
     const addDeparture = () => setDepartures(prev => [...prev, { start_date: '', end_date: '', stock: '' }]);
     const removeDeparture = (index) => setDepartures(prev => prev.filter((_, i) => i !== index));
     const updateDeparture = (index, field, value) => setDepartures(prev => prev.map((dep, i) => i === index ? { ...dep, [field]: value } : dep));
@@ -222,6 +237,13 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
     const handleSubmit = async () => {
         if (!formData.title || !formData.destination || !formData.price_adult) {
             toast.error('Vui lòng điền tên tour, điểm đến và giá người lớn!');
+            return;
+        }
+
+        const todayStr = getTodayDateString();
+        const hasPastDate = departures.some(d => d.start_date && d.start_date < todayStr);
+        if (hasPastDate) {
+            toast.error('Lịch khởi hành không được chứa ngày đi ở quá khứ!');
             return;
         }
 
@@ -302,7 +324,7 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
                 <div className="overflow-y-auto flex-1 px-6 py-6 space-y-6">
                     <TourBasicInfoSection formData={formData} handleInputChange={handleInputChange} />
 
-                    <TourDeparturesSection departures={departures} addDeparture={addDeparture} removeDeparture={removeDeparture} updateDeparture={updateDeparture} />
+                    <TourDeparturesSection departures={departures} addDeparture={addDeparture} removeDeparture={removeDeparture} updateDeparture={updateDeparture} duration={formData.duration} />
 
                     <TourPricingSection formData={formData} handleInputChange={handleInputChange} />
 

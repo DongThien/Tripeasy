@@ -59,7 +59,7 @@ const TourBasicInfoSection = ({ formData, handleInputChange }) => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Thời lượng</label>
                         <input
@@ -68,17 +68,6 @@ const TourBasicInfoSection = ({ formData, handleInputChange }) => {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
                             value={formData.duration}
                             onChange={(e) => handleInputChange('duration', e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Số lượng tối đa</label>
-                        <input
-                            type="number"
-                            min="1"
-                            placeholder="Ví dụ: 20"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B1A1A] outline-none"
-                            value={formData.max_guests}
-                            onChange={(e) => handleInputChange('max_guests', e.target.value)}
                         />
                     </div>
                     <div>

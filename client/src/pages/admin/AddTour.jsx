@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import axiosClient from '../../services/axiosClient';
 import { compressImages } from '../../utils/imageCompressor';
 import { uploadTourImagesBackground } from '../../services/imageUploadService';
+import { getTodayDateString, calculateEndDate } from '../../utils/dateHelper';
 
 import TourBasicInfoSection from '../../components/admin/addTour/TourBasicInfoSection';
 import TourPricingSection from '../../components/admin/addTour/TourPricingSection';
@@ -19,7 +20,7 @@ const AddTour = () => {
 
     // 1. Khai báo Form State
     const [formData, setFormData] = useState({
-        title: '', destination: '', duration: '', region: '', max_guests: '',
+        title: '', destination: '', duration: '', region: '', max_guests: '0',
         price_adult: '', price_child: '', old_price: '',
         itinerary: '', highlights: '', included: '', excluded: '',
         start_location: '', transport: '', category: ''
@@ -41,6 +42,20 @@ const AddTour = () => {
     const [policyChild, setPolicyChild] = useState(['']);
     const [policyCancel, setPolicyCancel] = useState(['']);
     const [policyOther, setPolicyOther] = useState(['']);
+
+    // Tự động tính lại ngày về của các ngày khởi hành khi thời lượng tour thay đổi
+    useEffect(() => {
+        if (!formData.duration || departures.length === 0) return;
+        setDepartures(prev => prev.map(dep => {
+            if (dep.start_date) {
+                const calculatedEnd = calculateEndDate(dep.start_date, formData.duration);
+                if (calculatedEnd && calculatedEnd !== dep.end_date) {
+                    return { ...dep, end_date: calculatedEnd };
+                }
+            }
+            return dep;
+        }));
+    }, [formData.duration]);
 
     // Helpers
     const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
@@ -94,6 +109,13 @@ const AddTour = () => {
         try {
             if (!formData.title || !formData.destination || !formData.price_adult) {
                 toast.error('Vui lòng điền đầy đủ Tên tour, Điểm đến và Giá người lớn!');
+                return;
+            }
+
+            const todayStr = getTodayDateString();
+            const hasPastDate = departures.some(d => d.start_date && d.start_date < todayStr);
+            if (hasPastDate) {
+                toast.error('Lịch khởi hành không được chứa ngày đi ở quá khứ!');
                 return;
             }
 
@@ -158,15 +180,16 @@ const AddTour = () => {
             <div className="max-w-5xl mx-auto space-y-6">
                 <TourBasicInfoSection formData={formData} handleInputChange={handleInputChange} />
 
-                {/* Khu vực tạo Lịch Khởi Hành (Mới) */}
+                {/* Khu vực tạo Lịch Khởi Hành */}
                 <TourDeparturesSection
                     departures={departures} addDeparture={addDeparture}
                     removeDeparture={removeDeparture} updateDeparture={updateDeparture}
+                    duration={formData.duration}
                 />
 
                 <TourPricingSection formData={formData} handleInputChange={handleInputChange} />
 
-                {/* Khu vực tạo Điểm nhấn & Dịch vụ (Mới) */}
+                {/* Khu vực tạo Điểm nhấn & Dịch vụ */}
                 <TourExtrasSection
                     highlights={highlights} setHighlights={setHighlights}
                     included={included} setIncluded={setIncluded}

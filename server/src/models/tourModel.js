@@ -2,7 +2,8 @@ import { pgPool } from "../config/db.js";
 
 export const fetchAllToursRows = async ({ destination, region, title, limit, offset }) => {
     let baseQuery = `
-        SELECT t.*, 
+        SELECT t.tour_id, t.title, t.price_adult, t.price_child, t.duration, t.destination, t.availability, t.itinerary, t.created_at, t.region, t.start_location, t.transport, t.old_price, t.highlights, t.included, t.excluded, t.category, t.rating_avg, t.review_count, t.policy_child, t.policy_cancel, t.policy_other, t.embedding,
+               COALESCE((SELECT SUM(stock) FROM tour_departures WHERE tour_id = t.tour_id), 0)::int AS quantity,
                (SELECT i.image_url FROM images i WHERE i.tour_id = t.tour_id ORDER BY i.upload_date ASC LIMIT 1) AS image_url,
                (SELECT COALESCE(JSON_AGG(
                    JSON_BUILD_OBJECT(
@@ -84,7 +85,8 @@ export const insertTourDeparturesRow = async (client, tourId, departures) => {
 
 export const fetchTourWithImagesRow = async (tourId) => {
     const tourQuery = `
-        SELECT t.*, 
+        SELECT t.tour_id, t.title, t.price_adult, t.price_child, t.duration, t.destination, t.availability, t.itinerary, t.created_at, t.region, t.start_location, t.transport, t.old_price, t.highlights, t.included, t.excluded, t.category, t.rating_avg, t.review_count, t.policy_child, t.policy_cancel, t.policy_other, t.embedding,
+            COALESCE((SELECT SUM(stock) FROM tour_departures WHERE tour_id = t.tour_id), 0)::int AS quantity,
             (SELECT ARRAY_AGG(i.image_url) FROM images i WHERE i.tour_id = t.tour_id) AS images,
             (SELECT COALESCE(JSON_AGG(
                 JSON_BUILD_OBJECT(
