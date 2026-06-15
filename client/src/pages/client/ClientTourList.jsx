@@ -92,7 +92,7 @@ const ClientTourList = () => {
                 setLoading(true);
                 setError(null);
 
-                const data = await tourService.getAllTours();
+                const data = await tourService.getAllTours({ availability: true });
                 console.log('Fetched tours:', data);
 
                 // Đảm bảo là mảng
@@ -113,6 +113,9 @@ const ClientTourList = () => {
     // Filter tours based on user selections
     const filteredTours = useMemo(() => {
         return tours.filter((tour) => {
+            // Check availability
+            const matchesAvailability = tour.availability === true;
+
             // Search filter
             const matchesSearch =
                 !searchQuery ||
@@ -164,7 +167,7 @@ const ClientTourList = () => {
                 });
             })();
 
-            return matchesSearch && matchesPrice && matchesArea && matchesOrigin && matchesType && matchesRating && matchesDate;
+            return matchesAvailability && matchesSearch && matchesPrice && matchesArea && matchesOrigin && matchesType && matchesRating && matchesDate;
         });
     }, [selectedAreas, selectedOrigin, selectedType, selectedRating, searchQuery, tours, priceRange, selectedDate]);
 

@@ -171,7 +171,14 @@ const EditTourForm = ({ tourData, onClose, onSaved }) => {
     const updateDeparture = (index, field, value) => setDepartures(prev => prev.map((dep, i) => i === index ? { ...dep, [field]: value } : dep));
 
     const addItineraryDay = () => setItinerary(prev => [...prev, { day: prev.length + 1, title: '', content: '' }]);
-    const removeItineraryDay = (index) => { if (itinerary.length > 1) setItinerary(prev => prev.filter((_, i) => i !== index)); };
+    const removeItineraryDay = (index) => {
+        if (itinerary.length > 1) {
+            setItinerary(prev => {
+                const filtered = prev.filter((_, i) => i !== index);
+                return filtered.map((item, i) => ({ ...item, day: i + 1 }));
+            });
+        }
+    };
     const updateItinerary = (index, field, value) => setItinerary(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
 
     const handleImageUpload = async (e) => {

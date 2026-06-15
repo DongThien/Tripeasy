@@ -3,9 +3,9 @@ import axiosClient from './axiosClient';
 
 const tourService = {
     // Lấy tất cả tours
-    getAllTours: async () => {
+    getAllTours: async (params) => {
         try {
-            const response = await axiosClient.get('/tours');
+            const response = await axiosClient.get('/tours', { params });
             console.log("Raw API Response:", response);
             console.log("Response data:", response.data);
 

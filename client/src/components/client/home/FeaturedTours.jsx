@@ -8,7 +8,7 @@ const FeaturedTours = () => {
     useEffect(() => {
         const fetchFeaturedTours = async () => {
             try {
-                const data = await tourService.getAllTours();
+                const data = await tourService.getAllTours({ availability: true });
                 const list = Array.isArray(data) ? data : [];
                 setTours(list);
             } catch {

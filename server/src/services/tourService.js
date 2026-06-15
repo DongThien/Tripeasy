@@ -31,8 +31,8 @@ const cleanNum = (val) => {
 };
 
 export const getAllToursData = async (query) => {
-    const { destination, region, title, limit, offset } = query;
-    const result = await fetchAllToursRows({ destination, region, title, limit, offset });
+    const { destination, region, title, limit, offset, availability } = query;
+    const result = await fetchAllToursRows({ destination, region, title, limit, offset, availability });
     return result.rows;
 };
 

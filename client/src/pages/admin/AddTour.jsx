@@ -95,7 +95,14 @@ const AddTour = () => {
 
     // Helpers cho Lịch trình & Lịch khởi hành
     const addItineraryDay = () => setItinerary(prev => [...prev, { day: prev.length + 1, title: '', content: '' }]);
-    const removeItineraryDay = (index) => { if (itinerary.length > 1) setItinerary(prev => prev.filter((_, i) => i !== index)); };
+    const removeItineraryDay = (index) => {
+        if (itinerary.length > 1) {
+            setItinerary(prev => {
+                const filtered = prev.filter((_, i) => i !== index);
+                return filtered.map((item, i) => ({ ...item, day: i + 1 }));
+            });
+        }
+    };
     const updateItinerary = (index, field, value) => setItinerary(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
 
     const addDeparture = () => setDepartures(prev => [...prev, { start_date: '', end_date: '', stock: '' }]);
