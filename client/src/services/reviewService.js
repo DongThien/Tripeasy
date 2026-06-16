@@ -24,13 +24,18 @@ export const replyToReview = (id, admin_reply) =>
 export const deleteReview = (id) =>
     axiosClient.delete(`/reviews/${id}`).then((r) => r.data);
 
+// Khách hàng lấy danh sách đánh giá của chính mình
+export const getMyReviews = () =>
+    axiosClient.get('/reviews/me').then((r) => r.data);
+
 const reviewService = {
     getTourReviews,
     submitReview,
     checkReviewEligibility,
     getAllReviews,
     replyToReview,
-    deleteReview
+    deleteReview,
+    getMyReviews
 };
 
 export default reviewService;

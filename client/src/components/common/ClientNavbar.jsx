@@ -25,6 +25,17 @@ const ClientNavbar = () => {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [settingsTab, setSettingsTab] = useState("profile"); // "profile" | "password" | "delete"
+    const [searchExpanded, setSearchExpanded] = useState(false);
+    const [navbarSearchVal, setNavbarSearchVal] = useState("");
+
+    const handleNavbarSearch = () => {
+        if (navbarSearchVal.trim()) {
+            sessionStorage.removeItem('tripeasy_client_tours_page');
+            navigate(`/client/tours?q=${encodeURIComponent(navbarSearchVal.trim())}`);
+            setSearchExpanded(false);
+            setNavbarSearchVal("");
+        }
+    };
 
     useEffect(() => {
         const handleStorage = (event) => {
@@ -43,6 +54,9 @@ const ClientNavbar = () => {
         const handleClickOutside = (e) => {
             if (!e.target.closest('.user-dropdown-container')) {
                 setDropdownOpen(false);
+            }
+            if (!e.target.closest('.navbar-search-container')) {
+                setSearchExpanded(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -90,6 +104,11 @@ const ClientNavbar = () => {
                         <Link
                             key={to}
                             to={to}
+                            onClick={() => {
+                                if (to === '/client/tours') {
+                                    sessionStorage.removeItem('tripeasy_client_tours_page');
+                                }
+                            }}
                             className={`hover:text-[#8B1A1A] transition-colors ${pathname === to ? 'text-[#8B1A1A] font-semibold' : ''
                                 }`}
                         >
@@ -100,9 +119,39 @@ const ClientNavbar = () => {
 
                 {/* Right Actions */}
                 <div className="flex items-center gap-3">
-                    <button className="p-2 rounded-full hover:bg-gray-100 transition">
-                        <Search className="w-5 h-5 text-gray-700" />
-                    </button>
+                    <div className="flex items-center relative navbar-search-container">
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm tour..."
+                            value={navbarSearchVal}
+                            onChange={(e) => setNavbarSearchVal(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    handleNavbarSearch();
+                                }
+                            }}
+                            className={`bg-gray-50 border border-gray-250 text-xs rounded-full py-1.5 pl-4 pr-10 transition-all duration-300 focus:outline-none focus:ring-1 focus:ring-[#8B1A1A] focus:border-[#8B1A1A] ${
+                                searchExpanded ? 'w-48 opacity-100 translate-x-0' : 'w-0 opacity-0 translate-x-4 pointer-events-none'
+                            }`}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (searchExpanded) {
+                                    if (navbarSearchVal.trim()) {
+                                        handleNavbarSearch();
+                                    } else {
+                                        setSearchExpanded(false);
+                                    }
+                                } else {
+                                    setSearchExpanded(true);
+                                }
+                            }}
+                            className="p-2 rounded-full hover:bg-gray-100 transition ml-1"
+                        >
+                            <Search className="w-5 h-5 text-gray-750" />
+                        </button>
+                    </div>
                     {user ? (
                         <div className="hidden md:flex items-center gap-3">
                             {/* User Profile Dropdown Trigger */}
@@ -209,7 +258,12 @@ const ClientNavbar = () => {
                         <Link
                             key={to}
                             to={to}
-                            onClick={() => setMobileOpen(false)}
+                            onClick={() => {
+                                setMobileOpen(false);
+                                if (to === '/client/tours') {
+                                    sessionStorage.removeItem('tripeasy_client_tours_page');
+                                }
+                            }}
                             className={`font-medium transition-colors ${pathname === to ? 'text-[#8B1A1A] font-semibold' : 'text-gray-700'
                                 }`}
                         >

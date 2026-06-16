@@ -41,7 +41,7 @@ const RevenueChart = ({ data }) => {
     }
     return (
         <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={data} margin={{ top: 16, right: 24, left: 0, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 16, right: 24, left: 20, bottom: 0 }}>
                 <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#8B1A1A" stopOpacity={0.3} />
@@ -50,7 +50,7 @@ const RevenueChart = ({ data }) => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" tick={{ fontWeight: 500, fontSize: 13 }} />
-                <YAxis tickFormatter={formatVNDHelper} width={70} />
+                <YAxis tickFormatter={formatVNDHelper} width={90} />
                 <Tooltip content={<CustomTooltip />} />
                 <Area
                     type="monotone"

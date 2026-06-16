@@ -5,10 +5,14 @@ import {
     checkReviewEligibility,
     getAllReviews,
     replyToReview,
-    deleteReview
+    deleteReview,
+    getMyReviews
 } from "../controllers/reviewController.js";
 
 const router = express.Router();
+
+// Khách hàng lấy danh sách đánh giá của chính mình
+router.get("/me", verifyToken, getMyReviews);
 
 // Khách hàng gửi đánh giá mới
 router.post("/tours/:tourId", verifyToken, submitReview);

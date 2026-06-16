@@ -42,9 +42,9 @@ const TourListCard = ({ tour, isFavorite = false, onToggleFavorite }) => {
     const tourLink = `/client/tours/${tour.tour_id || tour.id}`;
 
     return (
-        <Link to={tourLink} className="block group">
-            <article className="group overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-lg">
-                <div className="relative aspect-[4/3] overflow-hidden bg-gray-200">
+        <Link to={tourLink} className="block group h-full">
+            <article className="group h-full flex flex-col overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+                <div className="relative aspect-[4/3] overflow-hidden bg-gray-200 flex-shrink-0">
                     <img
                         src={imageUrl}
                         alt={title}
@@ -53,15 +53,16 @@ const TourListCard = ({ tour, isFavorite = false, onToggleFavorite }) => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent" />
 
-                    {badges.length > 0 && (
-                        <div className="absolute left-3 top-3 flex gap-2">
-                            {badges.map((badge) => (
-                                <span key={badge} className={`rounded-md px-2.5 py-1 text-[11px] font-bold tracking-wide text-white ${badge === 'ECO' ? 'bg-emerald-600' : 'bg-[#8B1A1A]'}`}>
-                                    {badge}
-                                </span>
-                            ))}
-                        </div>
-                    )}
+                    <div className="absolute left-3 top-3 flex items-center gap-1.5 z-10">
+                        <span className="rounded-md bg-black/60 backdrop-blur-xs px-2.5 py-1 text-[11px] font-bold tracking-wide text-white">
+                            TRP-{tour.tour_id || tour.id}
+                        </span>
+                        {badges.map((badge) => (
+                            <span key={badge} className={`rounded-md px-2.5 py-1 text-[11px] font-bold tracking-wide text-white ${badge === 'ECO' ? 'bg-emerald-600' : 'bg-[#8B1A1A]'}`}>
+                                {badge}
+                            </span>
+                        ))}
+                    </div>
                     <button
                         type="button"
                         onClick={(e) => {
@@ -81,47 +82,51 @@ const TourListCard = ({ tour, isFavorite = false, onToggleFavorite }) => {
                     </button>
                 </div>
 
-                <div className="space-y-3 p-4">
-                    <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                        <MapPin className="h-4 w-4 text-[#8B1A1A]" />
-                        <span>{destination}</span>
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                        <span className="inline-flex items-center gap-1.5">
-                            <Clock className="h-4 w-4" />
-                            {duration}
-                        </span>
-                        {rating ? (
-                            <span className="inline-flex items-center gap-1.5">
-                                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                {Number(rating).toFixed(1)} ({reviewsCount})
-                            </span>
-                        ) : null}
-                    </div>
-
-                    <h3 className="line-clamp-2 text-lg font-bold text-gray-900 group-hover:text-[#8B1A1A] transition-colors">
-                        {title}
-                    </h3>
-
-                    {tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                            {tags.map((tag) => (
-                                <span key={tag} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
-                                    {tag}
-                                </span>
-                            ))}
+                <div className="space-y-3 p-4 flex-grow flex flex-col justify-between">
+                    <div className="space-y-3">
+                        <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                            <MapPin className="h-4 w-4 text-[#8B1A1A]" />
+                            <span>{destination}</span>
                         </div>
-                    )}
 
-                    <div className="flex items-end justify-between gap-3 pt-1 border-t border-gray-50">
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                            <span className="inline-flex items-center gap-1.5">
+                                <Clock className="h-4 w-4" />
+                                {duration}
+                            </span>
+                            {rating ? (
+                                <span className="inline-flex items-center gap-1.5">
+                                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                    {Number(rating).toFixed(1)} ({reviewsCount})
+                                </span>
+                            ) : null}
+                        </div>
+
+                        <h3 className="line-clamp-2 text-lg font-bold text-gray-900 group-hover:text-[#8B1A1A] transition-colors min-h-[3.5rem] leading-snug">
+                            {title}
+                        </h3>
+
+                        {tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                {tags.map((tag) => (
+                                    <span key={tag} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex items-end justify-between gap-3 pt-3 mt-auto border-t border-gray-100">
                         <div>
                             {oldPrice ? (
                                 <div className="text-sm text-gray-400 line-through">
                                     {formatCurrency(oldPrice)}
                                 </div>
-                            ) : null}
-                            <div className="text-xl font-bold text-[#8B1A1A]">
+                            ) : (
+                                <div className="text-sm text-transparent select-none">&nbsp;</div>
+                            )}
+                            <div className="text-xl font-bold text-[#8B1A1A] leading-none">
                                 {formatCurrency(currentPrice)}
                             </div>
                         </div>

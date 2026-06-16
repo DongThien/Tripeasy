@@ -27,9 +27,9 @@ const TourCard = ({ tour }) => {
     return (
         <Link
             to={detailLink}
-            className="bg-white rounded-xl shadow overflow-hidden flex flex-col group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+            className="bg-white rounded-xl shadow overflow-hidden flex flex-col h-full group cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
         >
-            <div className="relative overflow-hidden">
+            <div className="relative overflow-hidden flex-shrink-0">
                 <img
                     src={imageUrl}
                     alt={title}
@@ -48,24 +48,28 @@ const TourCard = ({ tour }) => {
                 </span>
             </div>
 
-            <div className="flex-1 flex flex-col p-4">
-                <div className="flex items-center gap-1 text-xs mb-2">
-                    <MapPin className="w-3.5 h-3.5 text-[#8B1A1A]" />
-                    <span className="font-semibold text-gray-500 uppercase tracking-wide">{region}</span>
-                </div>
+            <div className="flex-1 flex flex-col p-4 justify-between">
+                <div>
+                    <div className="flex items-center gap-1 text-xs mb-2">
+                        <MapPin className="w-3.5 h-3.5 text-[#8B1A1A]" />
+                        <span className="font-semibold text-gray-500 uppercase tracking-wide">{region}</span>
+                    </div>
 
-                <div className="font-bold text-gray-900 text-base mb-3 line-clamp-2 leading-snug group-hover:text-[#8B1A1A] transition-colors">
-                    {title}
+                    <div className="font-bold text-gray-900 text-base mb-3 line-clamp-2 leading-snug min-h-[2.75rem] group-hover:text-[#8B1A1A] transition-colors">
+                        {title}
+                    </div>
                 </div>
 
                 <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-3">
-                    <div>
-                        {oldPrice && (
-                            <span className="text-gray-400 text-sm line-through mr-2 block sm:inline">
+                    <div className="flex flex-col">
+                        {oldPrice ? (
+                            <span className="text-gray-400 text-xs line-through block">
                                 {oldPrice}
                             </span>
+                        ) : (
+                            <span className="text-transparent text-xs block select-none">&nbsp;</span>
                         )}
-                        <span className="text-[#8B1A1A] font-extrabold text-lg">{currentPrice}</span>
+                        <span className="text-[#8B1A1A] font-extrabold text-lg leading-none">{currentPrice}</span>
                     </div>
                     <div className="bg-red-50 p-2 rounded-full group-hover:bg-[#8B1A1A] transition-colors duration-300">
                         <ArrowRight className="w-5 h-5 text-[#8B1A1A] group-hover:text-white transition-colors" />

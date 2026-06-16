@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import ClientNavbar from '../../components/common/ClientNavbar';
@@ -25,7 +25,10 @@ const ClientTourList = () => {
     const [priceRange, setPriceRange] = useState([0, 10000000]);
     const [selectedType, setSelectedType] = useState('');
     const [selectedRating, setSelectedRating] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(() => {
+        const saved = sessionStorage.getItem('tripeasy_client_tours_page');
+        return saved ? Number(saved) : 1;
+    });
     const [selectedSort, setSelectedSort] = useState('Phổ biến nhất');
     const [selectedDate, setSelectedDate] = useState('');
 
@@ -171,10 +174,20 @@ const ClientTourList = () => {
         });
     }, [selectedAreas, selectedOrigin, selectedType, selectedRating, searchQuery, tours, priceRange, selectedDate]);
 
-    // Reset to page 1 when filters change
+    // Save page to sessionStorage when it changes
     useEffect(() => {
+        sessionStorage.setItem('tripeasy_client_tours_page', currentPage);
+    }, [currentPage]);
+
+    // Reset to page 1 when filters change (skip initial mount)
+    const isMounted = useRef(false);
+    useEffect(() => {
+        if (!isMounted.current) {
+            isMounted.current = true;
+            return;
+        }
         setCurrentPage(1);
-    }, [filteredTours.length]);
+    }, [searchQuery, selectedOrigin, selectedAreas, priceRange, selectedType, selectedRating, selectedDate]);
 
     // Sort filtered tours (Favorites pinned to top)
     const sortedTours = useMemo(() => {

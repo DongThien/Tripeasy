@@ -6,7 +6,8 @@ import {
     fetchAllReviewsRows,
     countAllReviewsRows,
     updateAdminReplyRow,
-    deleteReviewRow
+    deleteReviewRow,
+    fetchReviewsByUserIdRow
 } from '../models/reviewModel.js';
 
 /**
@@ -199,6 +200,28 @@ export const deleteReview = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Lỗi hệ thống khi xóa đánh giá: " + error.message
+        });
+    }
+};
+
+/**
+ * GET /api/reviews/me
+ * Khách hàng lấy danh sách đánh giá của chính mình
+ */
+export const getMyReviews = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const reviews = await fetchReviewsByUserIdRow(userId);
+        return res.status(200).json({
+            success: true,
+            data: reviews,
+            message: "Lấy danh sách đánh giá của tôi thành công!"
+        });
+    } catch (error) {
+        console.error("Error in getMyReviews:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Lỗi hệ thống khi tải đánh giá của bạn: " + error.message
         });
     }
 };

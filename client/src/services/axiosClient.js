@@ -20,4 +20,25 @@ axiosClient.interceptors.request.use((config) => {
 }, (error) => {
     return Promise.reject(error);
 });
+
+// TỰ ĐỘNG XỬ LÝ LỖI 401 (HẾT HẠN PHIÊN ĐĂNG NHẬP)
+axiosClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Phát sự kiện để các component khác cập nhật giao diện (ví dụ ClientNavbar)
+            window.dispatchEvent(new Event('storage'));
+            
+            // Chuyển hướng người dùng về trang đăng nhập kèm trang quay lại nếu không ở trang đăng nhập/đăng ký
+            const pathname = window.location.pathname;
+            if (pathname !== '/login' && pathname !== '/register') {
+                window.location.href = `/login?redirect=${encodeURIComponent(pathname + window.location.search)}`;
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default axiosClient;

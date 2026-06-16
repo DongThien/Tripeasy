@@ -143,3 +143,17 @@ export const deleteReviewRow = async (reviewId) => {
     const { rows } = await pgPool.query(query, [reviewId]);
     return rows[0];
 };
+
+// Fetch reviews for a specific user
+export const fetchReviewsByUserIdRow = async (userId) => {
+    const query = `
+        SELECT r.*, t.title as tour_title,
+               (SELECT image_url FROM images WHERE tour_id = r.tour_id ORDER BY upload_date ASC LIMIT 1) as tour_image
+        FROM reviews r
+        JOIN tours t ON r.tour_id = t.tour_id
+        WHERE r.user_id = $1
+        ORDER BY r.timestamp DESC
+    `;
+    const { rows } = await pgPool.query(query, [userId]);
+    return rows;
+};

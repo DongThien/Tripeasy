@@ -207,9 +207,9 @@ const Checkout = () => {
         const qrUrl = `https://img.vietqr.io/image/${bankCode}-${accountNumber}-compact2.png?amount=${totalPrice}&addInfo=${addInfo}&accountName=${accountName}`;
 
         return (
-            <div className="min-h-screen bg-[#FDFBF7] pt-24 pb-16">
+            <div className="min-h-screen bg-[#FDFBF7] pt-24 flex flex-col justify-between">
                 <ClientNavbar />
-                <main className="max-w-3xl mx-auto px-4">
+                <main className="max-w-3xl mx-auto px-4 pb-16 flex-grow w-full">
                     <div className="bg-white rounded-3xl border border-gray-100 shadow-xl p-8 text-center relative overflow-hidden">
                         {/* Success banner style */}
                         <div className="absolute top-0 inset-x-0 h-2 bg-gradient-to-r from-green-400 to-emerald-500" />
@@ -356,10 +356,10 @@ const Checkout = () => {
     }
 
     return (
-        <div className="min-h-screen bg-[#FDFBF7] pt-24 pb-16">
+        <div className="min-h-screen bg-[#FDFBF7] pt-24 flex flex-col justify-between">
             <ClientNavbar />
 
-            <main className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+            <main className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pb-16 flex-grow w-full">
                 {/* Back Link */}
                 <Link to={`/client/tours/${id}`} className="inline-flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-[#8B1A1A] transition mb-6">
                     <ArrowLeft className="w-4 h-4" /> Quay lại chi tiết tour

@@ -1,48 +1,20 @@
 import { pgPool } from "../config/db.js";
 
 export const fetchRevenueChartRows = async (startDate, endDate) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays <= 60) {
-        // Group by day
-        const query = `
-            SELECT 
-                TO_CHAR(booking_date, 'DD/MM') AS name,
-                booking_date::date AS sort_date,
-                SUM(total_price) AS total
-            FROM bookings
-            WHERE payment_status IN ('PAID', 'COMPLETED')
-                AND booking_date::date >= $1::date
-                AND booking_date::date <= $2::date
-            GROUP BY name, sort_date
-            ORDER BY sort_date ASC
-        `;
-        const { rows } = await pgPool.query(query, [startDate, endDate]);
-        return rows;
-    } else {
-        // Group by month
-        const query = `
-            SELECT 
-                TO_CHAR(DATE_TRUNC('month', booking_date), 'MM/YYYY') AS name,
-                EXTRACT(MONTH FROM booking_date) AS month_num,
-                EXTRACT(YEAR FROM booking_date) AS year_num,
-                SUM(total_price) AS total
-            FROM bookings
-            WHERE payment_status IN ('PAID', 'COMPLETED')
-                AND booking_date::date >= $1::date
-                AND booking_date::date <= $2::date
-            GROUP BY name, month_num, year_num
-            ORDER BY year_num ASC, month_num ASC
-        `;
-        const { rows } = await pgPool.query(query, [startDate, endDate]);
-        return rows.map(r => ({
-            name: `Tháng ${parseInt(r.month_num)}/${r.year_num}`,
-            total: r.total
-        }));
-    }
+    const query = `
+        SELECT 
+            TO_CHAR(booking_date, 'DD/MM') AS name,
+            booking_date::date AS sort_date,
+            SUM(total_price) AS total
+        FROM bookings
+        WHERE payment_status IN ('PAID', 'COMPLETED')
+            AND booking_date::date >= $1::date
+            AND booking_date::date <= $2::date
+        GROUP BY name, sort_date
+        ORDER BY sort_date ASC
+    `;
+    const { rows } = await pgPool.query(query, [startDate, endDate]);
+    return rows;
 };
 
 export const fetchTotalRevenueRow = async () => {
