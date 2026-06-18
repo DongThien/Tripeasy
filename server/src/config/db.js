@@ -5,23 +5,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Cấu hình kết nối PostgreSQL sử dụng Connection Pool
-const poolConfig = process.env.DATABASE_URL
-  ? {
-      connectionString: process.env.DATABASE_URL,
-      ssl: {
-        rejectUnauthorized: false
-      }
-    }
-  : {
-      user: process.env.PG_USER,
-      host: process.env.PG_HOST,
-      database: process.env.PG_DATABASE,
-      password: process.env.PG_PASSWORD,
-      port: process.env.PG_PORT,
-    };
-
 export const pgPool = new Pool({
-  ...poolConfig,
+  user: process.env.PG_USER,
+  host: process.env.PG_HOST,
+  database: process.env.PG_DATABASE,
+  password: process.env.PG_PASSWORD,
+  port: process.env.PG_PORT,
   max: 20, // Số lượng connection tối đa
   idleTimeoutMillis: 30000, // Đóng connection nếu không dùng sau 30s
 });
