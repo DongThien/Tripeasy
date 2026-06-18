@@ -41,7 +41,7 @@ const TourFilterSidebar = ({
     };
 
     return (
-        <aside className="lg:col-span-1 lg:sticky lg:top-24 self-start max-h-[calc(100vh-8rem)] overflow-y-auto no-scrollbar">
+        <aside className="lg:col-span-1">
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
                 <div className="mb-5 flex items-center justify-between">
                     <div className="flex items-center gap-2 font-semibold text-gray-900">

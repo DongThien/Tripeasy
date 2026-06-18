@@ -5,8 +5,11 @@ import { formatVND } from '../../../utils/formatHelper';
 
 const TourDetailBookingSidebar = ({ tour }) => {
     const navigate = useNavigate();
-    const [adults, setAdults] = useState(1);
-    const [children, setChildren] = useState(0);
+    const [adultsInput, setAdultsInput] = useState('1');
+    const [childrenInput, setChildrenInput] = useState('0');
+
+    const adults = useMemo(() => parseInt(adultsInput) || 0, [adultsInput]);
+    const children = useMemo(() => parseInt(childrenInput) || 0, [childrenInput]);
 
     // Chống sập và chỉ lấy các lịch khởi hành từ ngày hôm nay trở đi có status là AVAILABLE
     const validDepartures = useMemo(() => {
@@ -47,8 +50,27 @@ const TourDetailBookingSidebar = ({ tour }) => {
     }, [adults, children, tour.price_adult, tour.price_child]);
 
     const handleBooking = () => {
-        if (!selectedDepId && validDepartures.length > 0) {
+        if (validDepartures.length === 0) {
+            alert("Hiện tại tour chưa có lịch khởi hành khả dụng!");
+            return;
+        }
+
+        if (!selectedDepId) {
             alert("Vui lòng chọn ngày khởi hành!");
+            return;
+        }
+        
+        const parsedAdults = parseInt(adultsInput) || 0;
+        const parsedChildren = parseInt(childrenInput) || 0;
+        
+        if (parsedAdults < 1) {
+            alert("Số lượng người lớn tối thiểu là 1 khách!");
+            return;
+        }
+
+        const totalGuests = parsedAdults + parsedChildren;
+        if (selectedDeparture && totalGuests > selectedDeparture.stock) {
+            alert(`Ngày khởi hành được chọn chỉ còn lại ${selectedDeparture.stock} chỗ trống. Vui lòng chọn số lượng chỗ phù hợp (tổng cộng người lớn + trẻ em không vượt quá ${selectedDeparture.stock} chỗ).`);
             return;
         }
         
@@ -58,7 +80,7 @@ const TourDetailBookingSidebar = ({ tour }) => {
             return;
         }
 
-        navigate(`/client/tours/${tour.tour_id}/checkout?adults=${adults}&children=${children}&departureId=${selectedDepId}`);
+        navigate(`/client/tours/${tour.tour_id}/checkout?adults=${parsedAdults}&children=${parsedChildren}&departureId=${selectedDepId}`);
     };
 
     return (
@@ -100,8 +122,8 @@ const TourDetailBookingSidebar = ({ tour }) => {
                             <Users className="w-4 h-4 text-gray-400 mr-2" />
                             <input
                                 type="number" min="1"
-                                value={adults}
-                                onChange={(e) => setAdults(parseInt(e.target.value) || 1)}
+                                value={adultsInput}
+                                onChange={(e) => setAdultsInput(e.target.value)}
                                 className="bg-transparent w-full outline-none text-sm font-semibold"
                             />
                         </div>
@@ -112,8 +134,8 @@ const TourDetailBookingSidebar = ({ tour }) => {
                             <Users className="w-4 h-4 text-gray-400 mr-2" />
                             <input
                                 type="number" min="0"
-                                value={children}
-                                onChange={(e) => setChildren(parseInt(e.target.value) || 0)}
+                                value={childrenInput}
+                                onChange={(e) => setChildrenInput(e.target.value)}
                                 className="bg-transparent w-full outline-none text-sm font-semibold"
                             />
                         </div>
