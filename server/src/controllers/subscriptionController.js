@@ -33,12 +33,14 @@ export const subscribe = async (req, res) => {
                    </div>`
         };
 
-        // Send email
-        await sendMail(mailOptions);
+        // Send email in background so it does not block the user response
+        sendMail(mailOptions).catch(err => {
+            console.error("❌ Subscription notification email error:", err);
+        });
         
         res.json({ success: true, message: "Đăng ký nhận thông tin ưu đãi thành công!" });
     } catch (err) {
-        console.error("Subscription notification email error:", err);
+        console.error("Subscription controller error:", err);
         res.status(500).json({ success: false, message: "Đã xảy ra lỗi hệ thống khi đăng ký nhận tin" });
     }
 };
