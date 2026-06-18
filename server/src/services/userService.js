@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
+import { sendMail } from "../utils/mailHelper.js";
 import crypto from "crypto";
 import {
     fetchUserByEmailRow,
@@ -19,16 +19,8 @@ import {
     deleteUserRow
 } from "../models/userModel.js";
 
-// Cấu hình Mailer bảo mật thông qua biến môi trường (.env)
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
-
 const assertMailerConfig = () => {
+    if (process.env.BREVO_API_KEY) return;
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
         const error = new Error("Thiếu cấu hình EMAIL_USER/EMAIL_PASS cho dịch vụ gửi email");
         error.statusCode = 500;
@@ -228,9 +220,9 @@ export const forgotPasswordData = async (email) => {
     };
 
     try {
-        await transporter.sendMail(mailOptions);
+        await sendMail(mailOptions);
     } catch (err) {
-        const error = new Error("Gửi email thất bại. Vui lòng kiểm tra cấu hình SMTP/App Password");
+        const error = new Error("Gửi email thất bại. Vui lòng kiểm tra cấu hình SMTP/App Password hoặc Brevo API Key");
         error.statusCode = 500;
         error.original = err;
         throw error;

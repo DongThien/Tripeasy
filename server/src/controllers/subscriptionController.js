@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { sendMail } from '../utils/mailHelper.js';
 
 export const subscribe = async (req, res) => {
     try {
@@ -13,14 +13,7 @@ export const subscribe = async (req, res) => {
             return res.status(400).json({ success: false, message: "Định dạng email không hợp lệ" });
         }
 
-        // Configure Nodemailer using environment variables
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        // Gửi email qua Mail Helper (SMTP hoặc Brevo API)
 
         // Set up email content for the admin
         const mailOptions = {
@@ -41,7 +34,7 @@ export const subscribe = async (req, res) => {
         };
 
         // Send email
-        await transporter.sendMail(mailOptions);
+        await sendMail(mailOptions);
         
         res.json({ success: true, message: "Đăng ký nhận thông tin ưu đãi thành công!" });
     } catch (err) {

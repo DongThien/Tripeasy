@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { sendMail } from "../utils/mailHelper.js";
 import {
     fetchTourPriceRow,
     insertBookingRow,
@@ -26,17 +26,8 @@ const PAYMENT_STATUS_VI = {
 };
 
 // Helper check cấu hình Mailer
-const getTransporter = () => {
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        return nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
-    }
-    return null;
+const canSendMail = () => {
+    return !!(process.env.BREVO_API_KEY || (process.env.EMAIL_USER && process.env.EMAIL_PASS));
 };
 
 // Định dạng tiền tệ VND khi gửi email
@@ -45,9 +36,8 @@ const formatVNDEmail = (amount) => {
 };
 
 const sendBookingConfirmationEmail = async (booking) => {
-    const transporter = getTransporter();
-    if (!transporter) {
-        console.warn("⚠️ EMAIL_USER hoặc EMAIL_PASS chưa được cấu hình. Bỏ qua gửi email xác nhận đặt tour.");
+    if (!canSendMail()) {
+        console.warn("⚠️ EMAIL_USER/EMAIL_PASS hoặc BREVO_API_KEY chưa được cấu hình. Bỏ qua gửi email xác nhận đặt tour.");
         return;
     }
 
@@ -153,12 +143,11 @@ const sendBookingConfirmationEmail = async (booking) => {
         `
     };
 
-    return transporter.sendMail(mailOptions);
+    return sendMail(mailOptions);
 };
 
 const sendBookingUpdateEmail = async (booking) => {
-    const transporter = getTransporter();
-    if (!transporter) return;
+    if (!canSendMail()) return;
 
     const { booking_id, title, user_name, email, num_adults, num_children, total_price, start_date, booking_status, payment_status } = booking;
 
@@ -258,7 +247,7 @@ const sendBookingUpdateEmail = async (booking) => {
         `
     };
 
-    return transporter.sendMail(mailOptions);
+    return sendMail(mailOptions);
 };
 
 const mapBooking = (row) => ({

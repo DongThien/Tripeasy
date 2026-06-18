@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { sendMail } from "../utils/mailHelper.js";
 import {
     insertContactRow,
     fetchAllContactsRows,
@@ -9,17 +9,8 @@ import {
 } from "../models/contactModel.js";
 
 // Helper check cấu hình Mailer
-const getTransporter = () => {
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-        return nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
-    }
-    return null;
+const canSendMail = () => {
+    return !!(process.env.BREVO_API_KEY || (process.env.EMAIL_USER && process.env.EMAIL_PASS));
 };
 
 const STATUS_MAP_VI = {
@@ -62,8 +53,7 @@ export const createContactData = async (payload) => {
     });
 
     // 2. Gửi email thông báo cho Admin (nếu có cấu hình email)
-    const transporter = getTransporter();
-    if (transporter) {
+    if (canSendMail()) {
         const mailOptions = {
             from: `"Tripeasy Contact" <${process.env.EMAIL_USER}>`,
             to: process.env.EMAIL_USER, // Gửi về chính email của Admin
@@ -84,7 +74,7 @@ export const createContactData = async (payload) => {
         };
 
         // Gửi trong background, không chặn response của khách hàng
-        transporter.sendMail(mailOptions).catch(err => {
+        sendMail(mailOptions).catch(err => {
             console.error("❌ Lỗi gửi email thông báo liên hệ mới cho Admin:", err);
         });
     }
@@ -142,9 +132,8 @@ export const sendReplyEmailData = async (contactId, replyMessage) => {
         throw error;
     }
 
-    const transporter = getTransporter();
-    if (!transporter) {
-        const error = new Error("Chưa cấu hình thông tin EMAIL_USER/EMAIL_PASS ở máy chủ để gửi email!");
+    if (!canSendMail()) {
+        const error = new Error("Chưa cấu hình thông tin EMAIL_USER/EMAIL_PASS hoặc BREVO_API_KEY ở máy chủ để gửi email!");
         error.statusCode = 500;
         throw error;
     }
@@ -178,9 +167,9 @@ export const sendReplyEmailData = async (contactId, replyMessage) => {
     };
 
     try {
-        await transporter.sendMail(mailOptions);
+        await sendMail(mailOptions);
     } catch (err) {
-        const error = new Error("Không thể gửi email trả lời khách hàng. Vui lòng kiểm tra SMTP/App Password của máy chủ.");
+        const error = new Error("Không thể gửi email trả lời khách hàng. Vui lòng kiểm tra cấu hình SMTP/App Password hoặc Brevo API Key của máy chủ.");
         error.statusCode = 500;
         error.original = err;
         throw error;
