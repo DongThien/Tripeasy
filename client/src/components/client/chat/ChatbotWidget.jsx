@@ -549,7 +549,7 @@ const ChatbotWidget = () => {
                                     {msg.role === 'model' && msg.metadata && msg.metadata.pdf && (
                                         <div className="mt-2.5 animate-in fade-in duration-300">
                                             <a
-                                                href={`http://localhost:5000${msg.metadata.pdf.download_url}`}
+                                                href={`${import.meta.env.VITE_BASE_URL || "https://tripeasy-backend-u9xd.onrender.com"}${msg.metadata.pdf.download_url}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="flex items-center justify-center gap-2 bg-[#8B1A1A] hover:bg-[#A32222] text-white py-2 px-3 rounded-2xl text-[11px] font-bold shadow-md hover:scale-103 transition-all duration-200 cursor-pointer"
