@@ -2,8 +2,12 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import dns from 'dns';
 import { pgPool } from './config/db.js';
 import routes from './routes/index.js';
+
+// Ưu tiên phân giải địa chỉ IPv4 trước để tránh lỗi ENETUNREACH khi gửi mail trên Render
+dns.setDefaultResultOrder('ipv4first');
 
 dotenv.config();
 
