@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-    baseURL: "http://localhost:5000/api",
+    baseURL: "https://tripeasy-backend-u9xd.onrender.com",
     headers: {
         "Content-Type": "application/json",
     },
@@ -30,7 +30,7 @@ axiosClient.interceptors.response.use(
             localStorage.removeItem('user');
             // Phát sự kiện để các component khác cập nhật giao diện (ví dụ ClientNavbar)
             window.dispatchEvent(new Event('storage'));
-            
+
             // Chuyển hướng người dùng về trang đăng nhập kèm trang quay lại nếu không ở trang đăng nhập/đăng ký
             const pathname = window.location.pathname;
             if (pathname !== '/login' && pathname !== '/register') {
