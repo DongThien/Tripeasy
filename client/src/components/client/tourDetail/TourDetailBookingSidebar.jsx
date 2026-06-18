@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, ChevronDown, Info } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { formatVND } from '../../../utils/formatHelper';
 
 const TourDetailBookingSidebar = ({ tour }) => {
@@ -51,12 +52,12 @@ const TourDetailBookingSidebar = ({ tour }) => {
 
     const handleBooking = () => {
         if (validDepartures.length === 0) {
-            alert("Hiện tại tour chưa có lịch khởi hành khả dụng!");
+            toast.error("Hiện tại tour chưa có lịch khởi hành khả dụng!");
             return;
         }
 
         if (!selectedDepId) {
-            alert("Vui lòng chọn ngày khởi hành!");
+            toast.error("Vui lòng chọn ngày khởi hành!");
             return;
         }
         
@@ -64,13 +65,13 @@ const TourDetailBookingSidebar = ({ tour }) => {
         const parsedChildren = parseInt(childrenInput) || 0;
         
         if (parsedAdults < 1) {
-            alert("Số lượng người lớn tối thiểu là 1 khách!");
+            toast.error("Số lượng người lớn tối thiểu là 1 khách!");
             return;
         }
 
         const totalGuests = parsedAdults + parsedChildren;
         if (selectedDeparture && totalGuests > selectedDeparture.stock) {
-            alert(`Ngày khởi hành được chọn chỉ còn lại ${selectedDeparture.stock} chỗ trống. Vui lòng chọn số lượng chỗ phù hợp (tổng cộng người lớn + trẻ em không vượt quá ${selectedDeparture.stock} chỗ).`);
+            toast.error(`Ngày khởi hành được chọn chỉ còn lại ${selectedDeparture.stock} chỗ trống. Vui lòng chọn số lượng chỗ phù hợp (tổng cộng người lớn + trẻ em không vượt quá ${selectedDeparture.stock} chỗ).`);
             return;
         }
         

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FileText, Table2, Sheet, Printer, CalendarCheck, Clock, TrendingUp, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BookingTable from '../../components/admin/bookings/BookingTable';
+import ConfirmModal from '../../components/common/ConfirmModal';
 import AdminPagination from '../../components/admin/common/AdminPagination';
 import bookingService from '../../services/bookingService';
 import BookingDetailModal from '../../components/admin/bookings/BookingDetailModal';
@@ -23,6 +24,15 @@ const AdminBookings = () => {
     const [paymentStatusFilter, setPaymentStatusFilter] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 10;
+
+    // Custom Confirm Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null,
+        type: 'danger'
+    });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -103,10 +113,20 @@ const AdminBookings = () => {
         return rangeWithDots.filter((v, i, a) => a.indexOf(v) === i && totalPages > 1);
     };
 
-    const handleConfirm = async (bk) => {
-        const confirmAction = window.confirm("Bạn có chắc chắn muốn xác nhận đã thanh toán cho đơn đặt tour này? Trạng thái sẽ chuyển sang Hoàn thành.");
-        if (!confirmAction) return;
+    const handleConfirm = (bk) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Xác nhận thanh toán',
+            message: 'Bạn có chắc chắn muốn xác nhận đã thanh toán cho đơn đặt tour này? Trạng thái sẽ chuyển sang Hoàn thành.',
+            type: 'warning',
+            onConfirm: () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                executeConfirm(bk);
+            }
+        });
+    };
 
+    const executeConfirm = async (bk) => {
         try {
             const res = await bookingService.updateBookingStatus(bk.booking_id, {
                 booking_status: 'COMPLETED',
@@ -138,10 +158,20 @@ const AdminBookings = () => {
         }
     };
 
-    const handleCancel = async (bk) => {
-        const confirmCancel = window.confirm("Bạn có chắc chắn muốn HỦY đơn đặt tour này? Chỗ trống sẽ được hoàn trả lại hệ thống.");
-        if (!confirmCancel) return;
+    const handleCancel = (bk) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Xác nhận hủy đặt tour',
+            message: 'Bạn có chắc chắn muốn HỦY đơn đặt tour này? Chỗ trống sẽ được hoàn trả lại hệ thống.',
+            type: 'danger',
+            onConfirm: () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                executeCancel(bk);
+            }
+        });
+    };
 
+    const executeCancel = async (bk) => {
         try {
             const res = await bookingService.updateBookingStatus(bk.booking_id, {
                 booking_status: 'CANCELLED',
@@ -158,10 +188,10 @@ const AdminBookings = () => {
                 if (bk.booking_status === 'PENDING') {
                     setStats((prev) => ({ ...prev, pending: Math.max(0, prev.pending - 1) }));
                 }
-                toast.success('Đã hủy đơn đặt chỗ thành công');
+                toast.success('Hủy đơn đặt tour thành công!');
             }
         } catch {
-            toast.error('Không thể hủy đơn');
+            toast.error('Không thể hủy đơn đặt tour');
         }
     };
 
@@ -446,6 +476,15 @@ const AdminBookings = () => {
                     }}
                 />
             )}
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                type={confirmModal.type}
+            />
         </div>
     );
 };

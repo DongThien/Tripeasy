@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import chatService from '../../../services/chatService';
 import settingService from '../../../services/settingService';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../../common/ConfirmModal';
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80";
 
@@ -33,6 +34,14 @@ const ChatbotWidget = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedQr, setSelectedQr] = useState(null);
     const messagesEndRef = useRef(null);
+
+    // Custom Confirm Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null
+    });
 
     const location = useLocation();
     const [lastToken, setLastToken] = useState(() => localStorage.getItem('token'));
@@ -206,7 +215,7 @@ const ChatbotWidget = () => {
         }
     };
 
-    // Send Message Handler
+// Send Message Handler
     const handleSend = async (e) => {
         e.preventDefault();
         if (!message.trim() || isLoading) return;
@@ -217,27 +226,37 @@ const ChatbotWidget = () => {
     };
 
     // Reset Chat History Handler
-    const handleClearChat = async () => {
-        if (window.confirm('Bạn có muốn xóa toàn bộ lịch sử trò chuyện này không?')) {
-            try {
-                if (sessionId) {
-                    await chatService.clearChatHistory(sessionId);
-                }
-                const siteName = sysSettings?.general?.siteName || 'Tripeasy';
-                const clearedMsg = [
-                    {
-                        role: 'model',
-                        text: `Lịch sử trò chuyện đã được làm sạch. Mình là **${siteName} Bot** 🤖, rất vui được tiếp tục hỗ trợ bạn!`,
-                        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-                    }
-                ];
-                setMessages(clearedMsg);
-                localStorage.removeItem('tripeasy_chat_history');
-                toast.success('Đã làm sạch lịch sử trò chuyện!');
-            } catch (err) {
-                console.error('Error clearing chat history:', err);
-                toast.error('Lỗi khi xóa lịch sử trò chuyện trên hệ thống');
+    const handleClearChat = () => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Xóa lịch sử trò chuyện',
+            message: 'Bạn có muốn xóa toàn bộ lịch sử trò chuyện này không? Hành động này sẽ không thể khôi phục.',
+            onConfirm: () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                executeClearChat();
             }
+        });
+    };
+
+    const executeClearChat = async () => {
+        try {
+            if (sessionId) {
+                await chatService.clearChatHistory(sessionId);
+            }
+            const siteName = sysSettings?.general?.siteName || 'Tripeasy';
+            const clearedMsg = [
+                {
+                    role: 'model',
+                    text: `Lịch sử trò chuyện đã được làm sạch. Mình là **${siteName} Bot** 🤖, rất vui được tiếp tục hỗ trợ bạn!`,
+                    time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                }
+            ];
+            setMessages(clearedMsg);
+            localStorage.removeItem('tripeasy_chat_history');
+            toast.success('Lịch sử trò chuyện đã được làm sạch!');
+        } catch (err) {
+            console.error(err);
+            toast.error('Lỗi khi xóa lịch sử trò chuyện');
         }
     };
 
@@ -673,6 +692,14 @@ const ChatbotWidget = () => {
                     </div>
                 </div>
             )}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                type="danger"
+            />
         </div>
     );
 };

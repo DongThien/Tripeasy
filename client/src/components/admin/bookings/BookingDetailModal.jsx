@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Calendar, Users, FileText, Landmark, ShieldCheck, Mail, Phone, MapPin, DollarSign, CheckCircle2, AlertTriangle, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../../common/ConfirmModal';
 import bookingService from '../../../services/bookingService';
 import { formatVND } from '../../../utils/formatHelper';
 
@@ -9,20 +10,40 @@ const BookingDetailModal = ({ booking, onClose, onUpdateBooking }) => {
     const [updating, setUpdating] = useState(false);
     const [mounted, setMounted] = useState(false);
 
+    // Custom Confirm Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null,
+        type: 'danger'
+    });
+
     useEffect(() => {
         setMounted(true);
     }, []);
 
     if (!booking || !mounted) return null;
 
-    const handleStatusChange = async (newPaymentStatus, newBookingStatus) => {
-        const confirmMsg = newBookingStatus === 'CANCELLED' 
+    const handleStatusChange = (newPaymentStatus, newBookingStatus) => {
+        const isCancel = newBookingStatus === 'CANCELLED';
+        const confirmMsg = isCancel 
             ? 'Bạn có chắc chắn muốn HỦY đơn đặt tour này? Chỗ trống sẽ được hoàn lại.' 
             : `Xác nhận chuyển trạng thái đơn hàng sang: ${newBookingStatus === 'COMPLETED' ? 'Hoàn thành' : 'Đã xác nhận'}?`;
         
-        const confirmAction = window.confirm(confirmMsg);
-        if (!confirmAction) return;
+        setConfirmModal({
+            isOpen: true,
+            title: isCancel ? 'Hủy đơn đặt tour' : 'Cập nhật trạng thái',
+            message: confirmMsg,
+            type: isCancel ? 'danger' : 'warning',
+            onConfirm: () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                executeStatusChange(newPaymentStatus, newBookingStatus);
+            }
+        });
+    };
 
+    const executeStatusChange = async (newPaymentStatus, newBookingStatus) => {
         try {
             setUpdating(true);
             const res = await bookingService.updateBookingStatus(booking.booking_id, {
@@ -344,6 +365,14 @@ const BookingDetailModal = ({ booking, onClose, onUpdateBooking }) => {
                 }
             }
         `}} />
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                type={confirmModal.type}
+            />
     </>
 );
 };

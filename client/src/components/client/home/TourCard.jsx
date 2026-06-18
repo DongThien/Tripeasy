@@ -55,8 +55,10 @@ const TourCard = ({ tour }) => {
                         <span className="font-semibold text-gray-500 uppercase tracking-wide">{region}</span>
                     </div>
 
-                    <div className="font-bold text-gray-900 text-base mb-3 line-clamp-2 leading-snug min-h-[2.75rem] group-hover:text-[#8B1A1A] transition-colors">
-                        {title}
+                    <div className="min-h-[2.75rem] flex flex-col justify-start mb-3">
+                        <h3 className="font-bold text-gray-900 text-base line-clamp-2 max-h-[2.8em] overflow-hidden group-hover:text-[#8B1A1A] transition-colors">
+                            {title}
+                        </h3>
                     </div>
                 </div>
 

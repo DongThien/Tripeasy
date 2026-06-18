@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { MapPin, Search, Menu, X, User, Lock, Trash2, Settings } from 'lucide-react';
 import userService from '../../services/userService';
 import toast from 'react-hot-toast';
+import ConfirmModal from './ConfirmModal';
 
 const NAV_LINKS = [
     { label: 'Trang chủ', to: '/client' },
@@ -378,6 +379,14 @@ const AccountSettingsModal = ({ isOpen, onClose, user, onUserUpdate, activeTab, 
     const [confirmText, setConfirmText] = useState("");
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // Custom Confirm Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null
+    });
+
     useEffect(() => {
         if (user) {
             setUsername(user.username || "");
@@ -443,15 +452,25 @@ const AccountSettingsModal = ({ isOpen, onClose, user, onUserUpdate, activeTab, 
         }
     };
 
-    const handleDeleteAccountSubmit = async (e) => {
+    const handleDeleteAccountSubmit = (e) => {
         e.preventDefault();
         if (confirmText !== "DELETE") {
             toast.error("Vui lòng nhập đúng 'DELETE' để xác nhận");
             return;
         }
-        if (!window.confirm("Bạn có chắc chắn muốn xóa tài khoản này vĩnh viễn không? Hành động này sẽ xóa mọi đơn hàng và không thể phục hồi!")) {
-            return;
-        }
+        
+        setConfirmModal({
+            isOpen: true,
+            title: 'Xác nhận xóa tài khoản',
+            message: 'Bạn có chắc chắn muốn xóa tài khoản này vĩnh viễn không? Hành động này sẽ xóa mọi đơn hàng và không thể phục hồi!',
+            onConfirm: () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                executeDeleteAccount();
+            }
+        });
+    };
+
+    const executeDeleteAccount = async () => {
         setIsDeleting(true);
         try {
             const res = await userService.deleteUser(user.id);
@@ -648,6 +667,15 @@ const AccountSettingsModal = ({ isOpen, onClose, user, onUserUpdate, activeTab, 
                     )}
                 </div>
             </div>
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                type="danger"
+            />
         </div>
     );
 };

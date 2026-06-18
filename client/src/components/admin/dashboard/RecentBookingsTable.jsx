@@ -1,4 +1,5 @@
 import React from "react";
+import toast from "react-hot-toast";
 
 
 
@@ -30,13 +31,13 @@ function getStatusStyle(status) {
 const RecentBookingsTable = ({ bookings = [], formatVND }) => {
     const handlePrintRecentBookings = () => {
         if (!bookings || bookings.length === 0) {
-            alert("Không có dữ liệu đơn hàng gần đây để in!");
+            toast.error("Không có dữ liệu đơn hàng gần đây để in!");
             return;
         }
 
         const printWindow = window.open('', '_blank', 'width=1100,height=850');
         if (!printWindow) {
-            alert("Trình duyệt chặn mở cửa sổ mới! Vui lòng cho phép pop-up.");
+            toast.error("Trình duyệt chặn mở cửa sổ mới! Vui lòng cho phép pop-up.");
             return;
         }
         

@@ -102,9 +102,11 @@ const TourListCard = ({ tour, isFavorite = false, onToggleFavorite }) => {
                             ) : null}
                         </div>
 
-                        <h3 className="line-clamp-2 text-lg font-bold text-gray-900 group-hover:text-[#8B1A1A] transition-colors min-h-[3.5rem] leading-snug">
-                            {title}
-                        </h3>
+                        <div className="min-h-[3.5rem] flex flex-col justify-start">
+                            <h3 className="line-clamp-2 text-lg font-bold text-gray-900 group-hover:text-[#8B1A1A] transition-colors max-h-[2.8em] overflow-hidden">
+                                {title}
+                            </h3>
+                        </div>
 
                         {tags.length > 0 && (
                             <div className="flex flex-wrap gap-2">

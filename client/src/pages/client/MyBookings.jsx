@@ -7,6 +7,7 @@ import ClientNavbar from '../../components/common/ClientNavbar';
 import ClientFooter from '../../components/common/ClientFooter';
 import { formatVND } from '../../utils/formatHelper';
 import toast from 'react-hot-toast';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 const STATUS_BADGE = {
     'Chờ xử lý': 'bg-orange-50 text-orange-600 border border-orange-150',
@@ -27,6 +28,14 @@ const MyBookings = () => {
     const [cancellingId, setCancellingId] = useState(null);
     const [activeQRBookingId, setActiveQRBookingId] = useState(null);
     const [zoomQRUrl, setZoomQRUrl] = useState('');
+    
+    // Custom Confirm Modal State
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: null
+    });
 
     // Tab and reviews states
     const [activeTab, setActiveTab] = useState('bookings'); // 'bookings' | 'reviews'
@@ -93,10 +102,19 @@ const MyBookings = () => {
         fetchBookings();
     }, [navigate]);
 
-    const handleCancelBooking = async (bookingId) => {
-        const confirmCancel = window.confirm("Bạn có chắc chắn muốn hủy đơn đặt tour này? Hành động này sẽ giải phóng chỗ trống trên chuyến đi.");
-        if (!confirmCancel) return;
+    const triggerCancelConfirm = (bookingId) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Xác nhận hủy đặt tour',
+            message: 'Bạn có chắc chắn muốn hủy đơn đặt tour này? Hành động này sẽ giải phóng chỗ trống trên chuyến đi.',
+            onConfirm: () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                executeCancelBooking(bookingId);
+            }
+        });
+    };
 
+    const executeCancelBooking = async (bookingId) => {
         try {
             setCancellingId(bookingId);
             const res = await bookingService.cancelUserBooking(bookingId);
@@ -272,7 +290,7 @@ const MyBookings = () => {
                                                     {/* Action cancel button */}
                                                     {isPending && (
                                                         <button
-                                                            onClick={() => handleCancelBooking(booking.booking_id)}
+                                                            onClick={() => triggerCancelConfirm(booking.booking_id)}
                                                             disabled={cancellingId === booking.booking_id}
                                                             className="border border-red-200 text-red-500 bg-red-50/10 px-4 py-1.5 rounded-xl text-xs font-bold hover:bg-red-50 transition-colors flex items-center gap-1.5 disabled:opacity-50"
                                                         >
@@ -455,6 +473,15 @@ const MyBookings = () => {
                     </div>
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                type="danger"
+            />
             
             <ClientFooter />
         </div>
