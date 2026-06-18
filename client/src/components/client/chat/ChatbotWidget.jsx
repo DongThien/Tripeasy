@@ -8,10 +8,23 @@ import ConfirmModal from '../../common/ConfirmModal';
 
 const FALLBACK_IMG = "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=80";
 
+const formatMessageTime = (dateInput = new Date()) => {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return "";
+
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+
+    return `${hours}:${minutes} - ${day}/${month}`;
+};
+
 const getWelcomeMessage = (siteName = 'Tripeasy') => ({
     role: 'model',
     text: `Xin chào! Mình là **${siteName} Bot** 🤖, trợ lý ảo thông minh của ${siteName}.\n\nMình có thể giúp gì cho bạn hôm nay?\n- Tư vấn các tour du lịch hot nhất\n- Gợi ý điểm đến du lịch theo yêu cầu\n- Hướng dẫn đặt tour và thanh toán nhanh chóng`,
-    time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+    time: formatMessageTime()
 });
 
 const ChatbotWidget = () => {
@@ -170,7 +183,7 @@ const ChatbotWidget = () => {
         if (!text.trim() || isLoading) return;
 
         const userMessage = text.trim();
-        const timeStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        const timeStr = formatMessageTime();
 
         // Add user message to state
         setMessages(prev => [
@@ -194,7 +207,7 @@ const ChatbotWidget = () => {
                         role: 'model',
                         text: response.reply,
                         metadata: response.metadata,
-                        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                        time: formatMessageTime()
                     }
                 ]);
             } else {
@@ -207,7 +220,7 @@ const ChatbotWidget = () => {
                 {
                     role: 'model',
                     text: '⚠️ *Tripeasy Bot đang gặp sự cố kết nối. Xin lỗi bạn vì sự bất tiện này. Vui lòng thử lại sau giây lát.*',
-                    time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                    time: formatMessageTime()
                 }
             ]);
         } finally {
@@ -248,7 +261,7 @@ const ChatbotWidget = () => {
                 {
                     role: 'model',
                     text: `Lịch sử trò chuyện đã được làm sạch. Mình là **${siteName} Bot** 🤖, rất vui được tiếp tục hỗ trợ bạn!`,
-                    time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+                    time: formatMessageTime()
                 }
             ];
             setMessages(clearedMsg);

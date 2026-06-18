@@ -5,6 +5,19 @@ import { getSetting } from './settingService.js';
 import { createContactData } from './contactService.js';
 import * as chatModel from '../models/chatModel.js';
 
+export const formatMessageTime = (dateInput) => {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return "";
+
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+
+    return `${hours}:${minutes} - ${day}/${month}`;
+};
+
 export const getOrCreateSession = async (sessionId, userId) => {
     let finalSessionId = sessionId;
 
@@ -304,7 +317,7 @@ export const getChatHistory = async (sessionId, userId) => {
             role: msg.sender === 'user' ? 'user' : 'model',
             text: msg.content,
             metadata: msg.metadata,
-            time: new Date(msg.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+            time: formatMessageTime(msg.created_at)
         }))
     };
 };
@@ -336,6 +349,16 @@ export const processChat = async (message, sessionId, userId) => {
 
     const siteName = getSetting('general.siteName') || "Tripeasy";
     const hotline = getSetting('general.hotline') || "1900 1234";
+
+    // Dynamic current date reference for Gemini
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentDay = currentDate.getDate();
+    const weekdays = ["Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"];
+    const currentWeekday = weekdays[currentDate.getDay()];
+    const dateStr = `${currentWeekday}, ngày ${currentDay} tháng ${currentMonth} năm ${currentYear}`;
+    const isoDateStr = currentDate.toISOString().split('T')[0];
 
     // 4. Initialize Gemini with Tools and System Instruction
     const genAI = new GoogleGenerativeAI(apiKey);
@@ -504,6 +527,12 @@ Lưu ý quan trọng:
 - Khi người dùng hỏi về đơn hàng của họ (hoặc "tôi đã đặt tour nào", "đơn hàng của tôi"), hãy gọi tool "get_user_info_and_bookings" để lấy thông tin. Tuyệt đối không bịa ra đơn hàng giả lập.
 - Chỉ trả lời các câu hỏi liên quan đến du lịch, tour tuyến, dịch vụ hỗ trợ của ${siteName}. Từ chối trả lời lịch sự các câu hỏi không liên quan (như viết code, giải bài tập...).
 - Dựa vào kết quả trả về từ các công cụ (tools) để đưa ra câu trả lời thuyết phục, trôi chảy nhất.
+
+Lưu ý thời gian hệ thống hiện tại để đối chiếu ngày khởi hành khi khách đặt tour hoặc lọc tìm kiếm:
+- Hôm nay là: ${dateStr} (Định dạng YYYY-MM-DD là ${isoDateStr}).
+- Khi khách hàng nhắn thông tin ngày khởi hành dưới dạng viết tắt hoặc tương đối (ví dụ: "19/6", "ngày 19 tháng này", "ngày mai", "ngày kia", "thứ hai tuần sau"), bạn phải tự động dựa vào mốc thời gian hệ thống ở trên để tự suy luận tính toán chính xác ngày, tháng, năm cho tham số 'start_date' (định dạng YYYY-MM-DD) khi gọi công cụ 'create_chat_booking' hoặc bộ lọc của các công cụ tìm kiếm. Tuyệt đối không được hỏi lại người dùng để xin thông tin năm/tháng nếu đã đủ cơ sở tự suy luận.
+  * Ví dụ: Nếu hôm nay là ngày 18 tháng 6 năm 2026. Khách nhắn "19/6" hoặc "19 tháng này" -> 'start_date' sẽ là "2026-06-19". Khách nhắn "ngày mai" -> 'start_date' là "2026-06-19". Khách nhắn "20/6" -> 'start_date' là "2026-06-20". Khách nhắn "ngày kia" -> 'start_date' là "2026-06-20".
+
 `
             }]
         }
