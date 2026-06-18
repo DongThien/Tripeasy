@@ -10,8 +10,32 @@ dotenv.config();
 const app = express();
 
 // Middleware
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://tripeasy.vercel.app',
+    'https://tripeasy-tau.vercel.app'
+];
+if (process.env.CLIENT_URL) {
+    const envOrigins = process.env.CLIENT_URL.split(',').map(o => o.trim());
+    allowedOrigins.push(...envOrigins);
+}
+
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        
+        const isAllowed = allowedOrigins.includes(origin) || 
+                          origin.startsWith('http://localhost:') || 
+                          origin.endsWith('vercel.app') || 
+                          allowedOrigins.some(o => origin.startsWith(o));
+                          
+        if (isAllowed) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true
 }));
 app.use(express.json());
