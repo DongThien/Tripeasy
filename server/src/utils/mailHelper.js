@@ -13,24 +13,19 @@ const smtpTransporter = nodemailer.createTransport({
     }
 });
 
-/**
- * Gửi email bằng cách tự động chọn giữa Brevo HTTP API (khi có BREVO_API_KEY) và Nodemailer SMTP.
- * Nhận tham số mailOptions giống hệt như nodemailer.sendMail(mailOptions).
- */
 export const sendMail = async (mailOptions) => {
-    // 1. Kiểm tra nếu cấu hình Brevo API key được cung cấp (Khuyên dùng trên Render free tier)
-    if (process.env.BREVO_API_KEY) {
-        const senderEmail = process.env.EMAIL_USER || "dongthien157@gmail.com";
-        
-        // Trích xuất tên người gửi từ mailOptions.from (ví dụ: "Tripeasy Support" -> Tripeasy Support)
-        let fromName = "Tripeasy System";
-        if (mailOptions.from) {
-            const matches = mailOptions.from.match(/^"([^"]+)"/);
-            if (matches && matches[1]) {
-                fromName = matches[1];
-            }
+    // Trích xuất tên người gửi từ mailOptions.from
+    let fromName = "Tripeasy System";
+    if (mailOptions.from) {
+        const matches = mailOptions.from.match(/^"([^"]+)"/);
+        if (matches && matches[1]) {
+            fromName = matches[1];
         }
+    }
+    const senderEmail = process.env.EMAIL_USER || "dongthien157@gmail.com";
 
+    // 1. Dùng Brevo HTTP API
+    if (process.env.BREVO_API_KEY) {
         const response = await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: {
@@ -39,15 +34,8 @@ export const sendMail = async (mailOptions) => {
                 'content-type': 'application/json'
             },
             body: JSON.stringify({
-                sender: {
-                    name: fromName,
-                    email: senderEmail
-                },
-                to: [
-                    {
-                        email: mailOptions.to
-                    }
-                ],
+                sender: { name: fromName, email: senderEmail },
+                to: [{ email: mailOptions.to }],
                 subject: mailOptions.subject,
                 htmlContent: mailOptions.html
             })
@@ -57,11 +45,59 @@ export const sendMail = async (mailOptions) => {
             const errText = await response.text();
             throw new Error(`Brevo HTTP API failed: ${response.status} - ${errText}`);
         }
-        
         return await response.json();
     }
 
-    // 2. Mặc định dùng Nodemailer SMTP (Chạy tốt khi local hoặc khi đã unblock port)
+    // 2. Dùng SendGrid HTTP API
+    if (process.env.SENDGRID_API_KEY) {
+        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                personalizations: [{ to: [{ email: mailOptions.to }] }],
+                from: { email: senderEmail, name: fromName },
+                subject: mailOptions.subject,
+                content: [{ type: 'text/html', value: mailOptions.html }]
+            })
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`SendGrid HTTP API failed: ${response.status} - ${errText}`);
+        }
+        return { success: true };
+    }
+
+    // 3. Dùng Resend HTTP API
+    if (process.env.RESEND_API_KEY) {
+        // Lưu ý: Nếu dùng Resend Free, người gửi bắt đầu bằng "onboarding@resend.dev"
+        // trừ khi đã verify domain trong dashboard của Resend.
+        const resendSender = process.env.RESEND_SENDER || `onboarding@resend.dev`;
+        const response = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                from: `"${fromName}" <${resendSender}>`,
+                to: mailOptions.to,
+                subject: mailOptions.subject,
+                html: mailOptions.html
+            })
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(`Resend HTTP API failed: ${response.status} - ${errText}`);
+        }
+        return await response.json();
+    }
+
+    // 4. Mặc định dùng Nodemailer SMTP (chạy local hoặc khi đã unblock port)
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
         throw new Error("Thiếu cấu hình EMAIL_USER/EMAIL_PASS để gửi mail qua SMTP");
     }
