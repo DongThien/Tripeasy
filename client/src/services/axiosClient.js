@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-    baseURL: "https://tripeasy-backend-u9xd.onrender.com",
+    baseURL: "https://tripeasy-backend-u9xd.onrender.com/api",
     headers: {
         "Content-Type": "application/json",
     },
