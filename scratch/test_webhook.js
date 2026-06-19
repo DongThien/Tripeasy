@@ -40,7 +40,7 @@ const options = {
 console.log(`🚀 Đang gửi yêu cầu giả lập Webhook Casso...`);
 console.log(`📦 Nội dung gửi đi:`, JSON.stringify(payload, null, 2));
 
-fetch('http://localhost:5000/api/bookings/webhook/casso', options)
+fetch('https://tripeasy-backend-u9xd.onrender.com/api/bookings/webhook/casso', options)
     .then(async res => {
         const text = await res.text();
         let data;
