@@ -68,7 +68,18 @@ export const fetchToursByFiltersRows = async (queryStr, params) => {
 
 export const fetchAllToursForSemanticRow = async () => {
     const { rows } = await pgPool.query(
-        "SELECT tour_id, title, destination, duration, price_adult, highlights, embedding FROM tours WHERE availability = true AND embedding IS NOT NULL"
+        `SELECT t.tour_id, t.title, t.destination, t.duration, t.price_adult, t.highlights, t.embedding 
+         FROM tours t 
+         WHERE t.availability = true 
+           AND t.embedding IS NOT NULL
+           AND EXISTS (
+               SELECT 1 
+               FROM tour_departures td 
+               WHERE td.tour_id = t.tour_id 
+                 AND td.start_date >= NOW()::date 
+                 AND td.status = 'AVAILABLE' 
+                 AND td.stock > 0
+           )`
     );
     return rows;
 };

@@ -72,6 +72,14 @@ const executeSearchToursByFilters = async (args) => {
         SELECT t.tour_id, t.title, t.destination, t.duration, t.price_adult, t.price_child, t.old_price, t.transport, t.start_location, t.highlights
         FROM tours t
         WHERE t.availability = true
+          AND EXISTS (
+              SELECT 1 
+              FROM tour_departures td 
+              WHERE td.tour_id = t.tour_id 
+                AND td.start_date >= NOW()::date 
+                AND td.status = 'AVAILABLE' 
+                AND td.stock > 0
+          )
     `;
     const params = [];
     let idx = 1;
@@ -97,18 +105,29 @@ const executeSearchToursByFilters = async (args) => {
     query += " ORDER BY t.price_adult ASC LIMIT 5";
 
     const rows = await chatModel.fetchToursByFiltersRows(query, params);
-    return rows.map(r => ({
-        tour_id: r.tour_id,
-        title: r.title,
-        destination: r.destination,
-        duration: r.duration,
-        price_adult: Number(r.price_adult),
-        price_child: r.price_child ? Number(r.price_child) : null,
-        old_price: r.old_price ? Number(r.old_price) : null,
-        transport: r.transport,
-        start_location: r.start_location,
-        highlights: r.highlights
+    
+    const toursWithDepartures = await Promise.all(rows.map(async r => {
+        const departures = await chatModel.fetchOtherTourDeparturesForChatRows(r.tour_id);
+        const formattedDepartures = departures.map(d => ({
+            date: new Date(d.start_date).toISOString().split('T')[0],
+            stock: d.stock
+        }));
+        return {
+            tour_id: r.tour_id,
+            title: r.title,
+            destination: r.destination,
+            duration: r.duration,
+            price_adult: Number(r.price_adult),
+            price_child: r.price_child ? Number(r.price_child) : null,
+            old_price: r.old_price ? Number(r.old_price) : null,
+            transport: r.transport,
+            start_location: r.start_location,
+            highlights: r.highlights,
+            upcoming_departures: formattedDepartures
+        };
     }));
+
+    return toursWithDepartures;
 };
 
 const executeSearchToursSemantic = async (args) => {
@@ -135,15 +154,27 @@ const executeSearchToursSemantic = async (args) => {
     });
 
     toursWithScores.sort((a, b) => b.similarity - a.similarity);
-    return toursWithScores.slice(0, 3).map(t => ({
-        tour_id: t.tour_id,
-        title: t.title,
-        destination: t.destination,
-        duration: t.duration,
-        price_adult: t.price_adult,
-        highlights: t.highlights,
-        similarity: parseFloat(t.similarity.toFixed(4))
+    const topTours = toursWithScores.slice(0, 3);
+
+    const topToursWithDepartures = await Promise.all(topTours.map(async t => {
+        const departures = await chatModel.fetchOtherTourDeparturesForChatRows(t.tour_id);
+        const formattedDepartures = departures.map(d => ({
+            date: new Date(d.start_date).toISOString().split('T')[0],
+            stock: d.stock
+        }));
+        return {
+            tour_id: t.tour_id,
+            title: t.title,
+            destination: t.destination,
+            duration: t.duration,
+            price_adult: t.price_adult,
+            highlights: t.highlights,
+            similarity: parseFloat(t.similarity.toFixed(4)),
+            upcoming_departures: formattedDepartures
+        };
     }));
+
+    return topToursWithDepartures;
 };
 
 const executeGetUserInfoAndBookings = async (userId) => {
@@ -507,7 +538,7 @@ Bạn là ${siteName} Bot - Trợ lý ảo chuyên nghiệp, thông minh của n
 Nhiệm vụ của bạn là:
 1. Chào đón và tư vấn thông tin về du lịch, các địa danh nổi tiếng và các tour du lịch có sẵn.
 2. Giới thiệu và đề xuất các dịch vụ tour có sẵn trên hệ thống của ${siteName} một cách thân thiện, lịch sự và tự nhiên.
-3. Khi giới thiệu tour du lịch, hãy tóm tắt ngắn gọn các nét chính (tên tour, giá cả, thời gian, điểm xuất phát) và dùng các tool được cung cấp để tìm kiếm thông tin thật chính xác từ CSDL.
+3. Khi giới thiệu tour du lịch, hãy tóm tắt ngắn gọn các nét chính (tên tour, giá cả, thời gian, điểm xuất phát, các ngày khởi hành có sẵn và số chỗ còn lại tương ứng trong trường 'upcoming_departures') và dùng các tool được cung cấp để tìm kiếm thông tin thật chính xác từ CSDL. Chỉ giới thiệu các tour có lịch khởi hành cụ thể sắp tới và còn chỗ, tuyệt đối không gợi ý bâng quơ không kèm ngày khởi hành và số chỗ cụ thể.
 4. Khi khách hàng bày tỏ ý muốn đặt tour:
    - Hãy gọi tool "get_user_info_and_bookings" để kiểm tra xem họ đã đăng nhập hay chưa.
    - Nếu họ chưa đăng nhập, hãy lịch sự đề nghị họ nhấp vào biểu tượng "Tài khoản" ở góc trên bên phải màn hình để đăng nhập trước khi tiến hành đặt tour qua chatbot.
